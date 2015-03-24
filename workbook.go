@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"log"
 	"unicode/utf16"
 )
 
@@ -150,7 +149,6 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
 		var phonetic_size uint32
 		var flag byte
 		binary.Read(buf, binary.LittleEndian, &flag)
-		log.Println(flag, size)
 		if flag&0x8 != 0 {
 			binary.Read(buf, binary.LittleEndian, &richtext_num)
 		}
@@ -200,27 +198,37 @@ func (w *WorkBook) PrepareSheet(sheet *WorkSheet) {
 	sheet.Parse(w.rs)
 }
 
-func (w *WorkBook) ReadAllCells() (res [][]string) {
+func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
+	res = make([][]string, 0)
 	for _, sheet := range w.Sheets {
-		w.PrepareSheet(sheet)
-		if sheet.MaxRow != 0 {
-			temp := make([][]string, sheet.MaxRow+1)
-			for k, row := range sheet.Rows {
-				data := make([]string, 0)
-				if len(row.Cols) > 0 {
-					for _, col := range row.Cols {
-						if uint16(len(data)) <= col.LastCol() {
-							data = append(data, make([]string, col.LastCol()-uint16(len(data))+1)...)
+		if len(res) < max {
+			max = max - len(res)
+			w.PrepareSheet(sheet)
+			if sheet.MaxRow != 0 {
+				leng := int(sheet.MaxRow) + 1
+				if max < leng {
+					leng = max
+				}
+				temp := make([][]string, leng)
+				for k, row := range sheet.Rows {
+					data := make([]string, 0)
+					if len(row.Cols) > 0 {
+						for _, col := range row.Cols {
+							if uint16(len(data)) <= col.LastCol() {
+								data = append(data, make([]string, col.LastCol()-uint16(len(data))+1)...)
+							}
+							str := col.String(w)
+							for i := uint16(0); i < col.LastCol()-col.FirstCol()+1; i++ {
+								data[col.FirstCol()+i] = str[i]
+							}
 						}
-						str := col.String(w)
-						for i := uint16(0); i < col.LastCol()-col.FirstCol()+1; i++ {
-							data[col.FirstCol()+i] = str[i]
+						if leng > int(k) {
+							temp[k] = data
 						}
 					}
-					temp[k] = data
 				}
+				res = append(res, temp...)
 			}
-			res = append(res, temp...)
 		}
 	}
 	return

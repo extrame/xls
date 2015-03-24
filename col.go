@@ -5,16 +5,19 @@ import (
 	"math"
 )
 
+type ContentHandler interface {
+	String(*WorkBook) []string
+	FirstCol() uint16
+	LastCol() uint16
+}
+
 type Col struct {
 	RowB      uint16
 	FirstColB uint16
 }
 
 type Coler interface {
-	String(*WorkBook) []string
 	Row() uint16
-	FirstCol() uint16
-	LastCol() uint16
 }
 
 func (c *Col) Row() uint16 {
@@ -30,7 +33,7 @@ func (c *Col) LastCol() uint16 {
 }
 
 func (c *Col) String(wb *WorkBook) []string {
-	return []string{""}
+	return []string{"default"}
 }
 
 type XfRk struct {
@@ -99,8 +102,20 @@ func (c *NumberCol) String(wb *WorkBook) []string {
 }
 
 type FormulaCol struct {
-	Col
+	Header struct {
+		Col
+		IndexXf uint16
+		Result  [8]byte
+		Flags   uint16
+		_       uint32
+	}
+	Bts []byte
 }
+
+func (c *FormulaCol) String(wb *WorkBook) []string {
+	return []string{"FormulaCol"}
+}
+
 type RkCol struct {
 	Col
 	Xfrk XfRk
@@ -123,4 +138,8 @@ func (c *LabelsstCol) String(wb *WorkBook) []string {
 type BlankCol struct {
 	Col
 	Xf uint16
+}
+
+func (c *BlankCol) String(wb *WorkBook) []string {
+	return []string{""}
 }

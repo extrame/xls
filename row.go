@@ -12,5 +12,5 @@ type RowInfo struct {
 
 type Row struct {
 	info *RowInfo
-	Cols map[uint16]Coler
+	Cols map[uint16]ContentHandler
 }

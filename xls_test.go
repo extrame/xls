@@ -7,8 +7,8 @@ import (
 )
 
 func TestOpen(t *testing.T) {
-	wb, _ := Open("n201503061328.xls", "utf-8")
-	fmt.Println(wb.ReadAllCells())
+	wb, _ := Open("n201502111031.xls", "utf-8")
+	fmt.Println(wb.ReadAllCells(1000))
 }
 
 func TestBof(t *testing.T) {
