@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"log"
 	"unicode/utf16"
 )
 
@@ -53,8 +54,8 @@ func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
 	w.Fonts = append(w.Fonts, Font{Info: font, Name: name})
 }
 
-func (w *WorkBook) addFormat(format *FormatB, buf io.ReadSeeker) {
-	w.Formats[format.Index] = &Format{b: format, str: w.get_string(buf, uint16(format.Size))}
+func (w *WorkBook) addFormat(format *Format) {
+	w.Formats[format.Head.Index] = format
 }
 
 func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int) (after *BOF, offset int) {
@@ -119,21 +120,11 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int
 		binary.Read(buf_item, binary.LittleEndian, f)
 		wb.addFont(f, buf_item)
 	case 0x41E: //FORMAT
-		// var bts = make([]byte, b.Size)
-		// binary.Read(buf, binary.LittleEndian, bts)
-		// buf_item := bytes.NewReader(bts)
-		f := new(FormatB)
-		binary.Read(buf_item, binary.LittleEndian, f)
-		wb.addFormat(f, buf_item)
-		// case 0x5c:
-		// var bts = make([]byte, b.Size)
-		// binary.Read(buf_item, binary.LittleEndian, bts)
-		// if wb.Is5ver {
-		// 	wb.Author = wb.get_string_from_bytes(bts[1:], uint16(bts[1]))
-		// } else {
-		// 	size := binary.LittleEndian.Uint16(bts)
-		// 	wb.Author = wb.get_string_from_bytes(bts[2:], size)
-		// }
+		f := new(Format)
+		binary.Read(buf_item, binary.LittleEndian, &f.Head)
+		f.str = wb.get_string(buf_item, f.Head.Size)
+		wb.addFormat(f)
+		log.Println(f.Head.Index, f.str)
 	}
 	return
 }

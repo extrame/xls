@@ -133,21 +133,6 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 		}
 
 		w.addRange(&hy.CellRange, &hy)
-
-		//
-		// bts := make([]byte, 20)
-		// binary.Read(buf, binary.LittleEndian, bts)
-
-		//
-
-		// if flag&0x80 != 0 {
-		// 	binary.Read(buf, binary.LittleEndian, &count)
-		// 	var bts = make([]uint16, count)
-		// 	binary.Read(buf, binary.LittleEndian, &bts)
-		// 	runes := utf16.Decode(bts)
-		// 	hy.TargetFrame = string(runes)
-		// }
-
 	default:
 		fmt.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
 		buf.Seek(int64(bof.Size), 1)
