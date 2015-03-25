@@ -87,7 +87,6 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 	case 0x1b8: //HYPERLINK
 		var hy HyperLink
 		binary.Read(buf, binary.LittleEndian, &hy.CellRange)
-
 		buf.Seek(20, 1)
 		var flag uint32
 		binary.Read(buf, binary.LittleEndian, &flag)
@@ -95,29 +94,34 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 
 		if flag&0x14 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			var bts = make([]uint16, count)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			runes := utf16.Decode(bts[:len(bts)-1])
-			hy.Description = string(runes)
+			hy.Description = bof.Utf16String(buf, count)
 		}
 		if flag&0x80 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			var bts = make([]uint16, count)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			runes := utf16.Decode(bts[:len(bts)-1])
-			hy.TargetFrame = string(runes)
+			hy.TargetFrame = bof.Utf16String(buf, count)
 		}
 		if flag&0x1 != 0 {
 			var guid [2]uint64
 			binary.Read(buf, binary.BigEndian, &guid)
 			if guid[0] == 0xE0C9EA79F9BACE11 && guid[1] == 0x8C8200AA004BA90B { //URL
+				hy.IsUrl = true
 				binary.Read(buf, binary.LittleEndian, &count)
-				var bts = make([]uint16, count/2)
+				hy.Url = bof.Utf16String(buf, count/2)
+			} else if guid[0] == 0x303000000000000 && guid[1] == 0xC000000000000046 { //URL{
+				var upCount uint16
+				binary.Read(buf, binary.LittleEndian, &upCount)
+				binary.Read(buf, binary.LittleEndian, &count)
+				bts := make([]byte, count)
 				binary.Read(buf, binary.LittleEndian, &bts)
-				runes := utf16.Decode(bts[:len(bts)-1])
-				hy.Url = string(runes)
-			} else {
-				log.Panicln("not support yet")
+				hy.ShortedFilePath = string(bts)
+				buf.Seek(24, 1)
+				binary.Read(buf, binary.LittleEndian, &count)
+				if count > 0 {
+					binary.Read(buf, binary.LittleEndian, &count)
+					buf.Seek(2, 1)
+					hy.ExtendedFilePath = bof.Utf16String(buf, count/2+1)
+				}
+				log.Println(hy)
 			}
 		}
 		if flag&0x8 != 0 {

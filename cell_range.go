@@ -34,26 +34,26 @@ func (c *CellRange) LastCol() uint16 {
 
 type HyperLink struct {
 	CellRange
-	Description string
-	TextMark    string
-	TargetFrame string
-	Url         string
+	Description      string
+	TextMark         string
+	TargetFrame      string
+	Url              string
+	ShortedFilePath  string
+	ExtendedFilePath string
+	IsUrl            bool
 }
 
 func (h *HyperLink) String(wb *WorkBook) []string {
 	res := make([]string, h.LastColB-h.FristColB+1)
-	str := fmt.Sprintf("%s(%s)", h.Description, h.Url)
+	var str string
+	if h.IsUrl {
+		str = fmt.Sprintf("%s(%s)", h.Description, h.Url)
+	} else {
+		str = h.ExtendedFilePath
+	}
+
 	for i := uint16(0); i < h.LastColB-h.FristColB+1; i++ {
 		res[i] = str
 	}
 	return res
 }
-
-// func (h *HyperLinkCR) ParseFrom(buf io.ReadSeeker) {
-// 	if h.Flags&0x1 != 0 {
-// 		binary.Read(buf, binary.LittleEndian, &richtext_num)
-// 	}
-// 	if h.Flags&0x4 != 0 {
-// 		binary.Read(buf, binary.LittleEndian, &phonetic_size)
-// 	}
-// }
