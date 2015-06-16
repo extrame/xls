@@ -15,6 +15,7 @@ type boundsheet struct {
 	Name    byte
 }
 
+//WorkSheet in one WorkBook
 type WorkSheet struct {
 	bs     *boundsheet
 	wb     *WorkBook
@@ -23,7 +24,7 @@ type WorkSheet struct {
 	MaxRow uint16
 }
 
-func (w *WorkSheet) Parse(buf io.ReadSeeker) {
+func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	w.Rows = make(map[uint16]*Row)
 	bof := new(BOF)
 	var bof_pre *BOF

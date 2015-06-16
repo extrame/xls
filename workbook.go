@@ -184,11 +184,13 @@ func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
 	w.Sheets = append(w.Sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
 }
 
+//reading a sheet from the compress file to memory, you should call this before you try to get anything from sheet
 func (w *WorkBook) PrepareSheet(sheet *WorkSheet) {
 	w.rs.Seek(int64(sheet.bs.Filepos), 0)
-	sheet.Parse(w.rs)
+	sheet.parse(w.rs)
 }
 
+//helper function to read all cells from file
 func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 	res = make([][]string, 0)
 	for _, sheet := range w.Sheets {
