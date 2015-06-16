@@ -100,8 +100,8 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int
 				}
 			}
 		}
-	case 0x85: // BOUNDSHEET
-		var bs = new(Boundsheet)
+	case 0x85: // bOUNDSHEET
+		var bs = new(boundsheet)
 		binary.Read(buf_item, binary.LittleEndian, bs)
 		// different for BIFF5 and BIFF8
 		wb.addSheet(bs, buf_item)
@@ -179,7 +179,7 @@ func (w *WorkBook) get_string_from_bytes(bts []byte, size uint16) string {
 	return w.get_string(buf, size)
 }
 
-func (w *WorkBook) addSheet(sheet *Boundsheet, buf io.ReadSeeker) {
+func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
 	name := w.get_string(buf, uint16(sheet.Name))
 	w.Sheets = append(w.Sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
 }

@@ -8,7 +8,7 @@ import (
 	"unicode/utf16"
 )
 
-type Boundsheet struct {
+type boundsheet struct {
 	Filepos uint32
 	Type    byte
 	Visible byte
@@ -16,7 +16,7 @@ type Boundsheet struct {
 }
 
 type WorkSheet struct {
-	bs     *Boundsheet
+	bs     *boundsheet
 	wb     *WorkBook
 	Name   string
 	Rows   map[uint16]*Row
@@ -30,6 +30,9 @@ func (w *WorkSheet) Parse(buf io.ReadSeeker) {
 	for {
 		if err := binary.Read(buf, binary.LittleEndian, bof); err == nil {
 			bof_pre = w.parseBof(buf, bof, bof_pre)
+			if bof.Id == 0xa {
+				break
+			}
 		} else {
 			fmt.Println(err)
 			break
@@ -133,8 +136,13 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 		}
 
 		w.addRange(&hy.CellRange, &hy)
+	case 0x809:
+		log.Println("sheet start")
+		buf.Seek(int64(bof.Size), 1)
+	case 0xa:
+		log.Println("sheet end")
 	default:
-		fmt.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
+		log.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
 		buf.Seek(int64(bof.Size), 1)
 	}
 	if col != nil {
@@ -153,27 +161,25 @@ func (w *WorkSheet) add(content interface{}) {
 }
 
 func (w *WorkSheet) addCell(col Coler, ch ContentHandler) {
-	var row *Row
-	var ok bool
-	if row, ok = w.Rows[col.Row()]; !ok {
-		info := new(RowInfo)
-		info.Index = col.Row()
-		row = w.addRow(info)
-	}
-	row.Cols[ch.FirstCol()] = ch
+	w.addContent(col.Row(), ch)
 }
 
 func (w *WorkSheet) addRange(rang Ranger, ch ContentHandler) {
+
+	for i := rang.FirstRow(); i <= rang.LastRow(); i++ {
+		w.addContent(i, ch)
+	}
+}
+
+func (w *WorkSheet) addContent(row_num uint16, ch ContentHandler) {
 	var row *Row
 	var ok bool
-	for i := rang.FirstRow(); i <= rang.LastRow(); i++ {
-		if row, ok = w.Rows[i]; !ok {
-			info := new(RowInfo)
-			info.Index = i
-			row = w.addRow(info)
-		}
-		row.Cols[ch.FirstCol()] = ch
+	if row, ok = w.Rows[row_num]; !ok {
+		info := new(RowInfo)
+		info.Index = row_num
+		row = w.addRow(info)
 	}
+	row.Cols[ch.FirstCol()] = ch
 }
 
 func (w *WorkSheet) addRow(info *RowInfo) (row *Row) {
