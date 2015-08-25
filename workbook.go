@@ -9,16 +9,17 @@ import (
 )
 
 type WorkBook struct {
-	Is5ver   bool
-	Type     uint16
-	Codepage uint16
-	Xfs      []st_xf_data
-	Fonts    []Font
-	Formats  map[uint16]*Format
-	Sheets   []*WorkSheet
-	Author   string
-	rs       io.ReadSeeker
-	sst      []string
+	Is5ver         bool
+	Type           uint16
+	Codepage       uint16
+	Xfs            []st_xf_data
+	Fonts          []Font
+	Formats        map[uint16]*Format
+	Sheets         []*WorkSheet
+	Author         string
+	rs             io.ReadSeeker
+	sst            []string
+	continue_utf16 uint16
 }
 
 func newWookBookFromOle2(rs io.ReadSeeker) *WorkBook {
@@ -33,12 +34,12 @@ func newWookBookFromOle2(rs io.ReadSeeker) *WorkBook {
 
 func (w *WorkBook) Parse(buf io.ReadSeeker) {
 	bof := new(BOF)
-	var bof_pre *BOF
+	bof_pre := new(BOF)
 	// buf := bytes.NewReader(bts)
 	offset := 0
 	for {
 		if err := binary.Read(buf, binary.LittleEndian, bof); err == nil {
-			bof_pre, offset = w.parseBof(buf, bof, bof_pre, offset)
+			bof_pre, bof, offset = w.parseBof(buf, bof, bof_pre, offset)
 		} else {
 			break
 		}
@@ -58,8 +59,9 @@ func (w *WorkBook) addFormat(format *Format) {
 	w.Formats[format.Head.Index] = format
 }
 
-func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int) (after *BOF, offset int) {
+func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int) (after *BOF, after_using *BOF, offset int) {
 	after = b
+	after_using = pre
 	var bts = make([]byte, b.Size)
 	binary.Read(buf, binary.LittleEndian, bts)
 	buf_item := bytes.NewReader(bts)
@@ -74,18 +76,25 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int
 	case 0x042: // CODEPAGE
 		binary.Read(buf_item, binary.LittleEndian, &wb.Codepage)
 	case 0x3c: // CONTINUE
-		var bts = make([]byte, b.Size)
-		binary.Read(buf_item, binary.LittleEndian, bts)
-		buf_item := bytes.NewReader(bts)
 		if pre.Id == 0xfc {
 			var size uint16
-			if err := binary.Read(buf_item, binary.LittleEndian, &size); err == nil {
-				wb.sst[offset_pre] = wb.get_string(buf_item, size)
+			var err error
+			if wb.continue_utf16 > 1 {
+				size = wb.continue_utf16
+				wb.continue_utf16 = 0
+				offset_pre--
+			} else {
+				err = binary.Read(buf_item, binary.LittleEndian, &size)
+			}
+			for err == nil && offset_pre < len(wb.sst) {
+				wb.sst[offset_pre] = wb.sst[offset_pre] + wb.get_string(buf_item, size)
 				offset_pre++
+				err = binary.Read(buf_item, binary.LittleEndian, &size)
 			}
 		}
 		offset = offset_pre
 		after = pre
+		after_using = b
 	case 0xfc: // SST
 		info := new(SstInfo)
 		binary.Read(buf_item, binary.LittleEndian, info)
@@ -148,9 +157,16 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
 		}
 		if flag&0x1 != 0 {
 			var bts = make([]uint16, size)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			runes := utf16.Decode(bts)
+			var err error
+			var i = uint16(0)
+			for ; i < size && err == nil; i++ {
+				err = binary.Read(buf, binary.LittleEndian, &bts[i])
+			}
+			runes := utf16.Decode(bts[:i])
 			res = string(runes)
+			if i < size {
+				w.continue_utf16 = size - i + 1
+			}
 		} else {
 			var bts = make([]byte, size)
 			binary.Read(buf, binary.LittleEndian, &bts)

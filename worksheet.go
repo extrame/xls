@@ -143,7 +143,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 	case 0xa:
 		log.Println("sheet end")
 	default:
-		log.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
+		// log.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
 		buf.Seek(int64(bof.Size), 1)
 	}
 	if col != nil {
