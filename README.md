@@ -1,4 +1,7 @@
 # xls
+
+[![GoDoc](https://godoc.org/github.com/extrame/xls?status.svg)](https://godoc.org/github.com/extrame/xls)
+
 Pure Golang xls library
 
 This is a xls library writen in pure Golang. Almostly it is translated from the libxls library in c.
