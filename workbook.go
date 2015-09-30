@@ -8,6 +8,7 @@ import (
 	"unicode/utf16"
 )
 
+//xls workbook type
 type WorkBook struct {
 	Is5ver         bool
 	Type           uint16
@@ -22,7 +23,8 @@ type WorkBook struct {
 	continue_utf16 uint16
 }
 
-func newWookBookFromOle2(rs io.ReadSeeker) *WorkBook {
+//read workbook from ole2 file
+func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb := new(WorkBook)
 	wb.Formats = make(map[uint16]*Format)
 	// wb.bts = bts
@@ -33,13 +35,13 @@ func newWookBookFromOle2(rs io.ReadSeeker) *WorkBook {
 }
 
 func (w *WorkBook) Parse(buf io.ReadSeeker) {
-	bof := new(BOF)
-	bof_pre := new(BOF)
+	b := new(bof)
+	bof_pre := new(bof)
 	// buf := bytes.NewReader(bts)
 	offset := 0
 	for {
-		if err := binary.Read(buf, binary.LittleEndian, bof); err == nil {
-			bof_pre, bof, offset = w.parseBof(buf, bof, bof_pre, offset)
+		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+			bof_pre, b, offset = w.parseBof(buf, b, bof_pre, offset)
 		} else {
 			break
 		}
@@ -59,7 +61,7 @@ func (w *WorkBook) addFormat(format *Format) {
 	w.Formats[format.Head.Index] = format
 }
 
-func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int) (after *BOF, after_using *BOF, offset int) {
+func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int) (after *bof, after_using *bof, offset int) {
 	after = b
 	after_using = pre
 	var bts = make([]byte, b.Size)
@@ -67,7 +69,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *BOF, pre *BOF, offset_pre int
 	buf_item := bytes.NewReader(bts)
 	switch b.Id {
 	case 0x809:
-		bif := new(BIFFHeader)
+		bif := new(biffHeader)
 		binary.Read(buf_item, binary.LittleEndian, bif)
 		if bif.Ver != 0x600 {
 			wb.Is5ver = true

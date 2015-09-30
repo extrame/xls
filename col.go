@@ -5,7 +5,8 @@ import (
 	"math"
 )
 
-type ContentHandler interface {
+//content type
+type contentHandler interface {
 	String(*WorkBook) []string
 	FirstCol() uint16
 	LastCol() uint16

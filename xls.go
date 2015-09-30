@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 )
 
+//Open one xls file
 func Open(file string, charset string) (*WorkBook, error) {
-
 	if bts, err := ioutil.ReadFile(file); err == nil {
 		return parse(bts, charset)
 	} else {
@@ -16,30 +16,38 @@ func Open(file string, charset string) (*WorkBook, error) {
 
 }
 
+//Open xls file from reader
 func OpenReader(reader io.ReadCloser, charset string) (*WorkBook, error) {
-	bts, _ := ioutil.ReadAll(reader)
-	return parse(bts, charset)
+	if bts, err := ioutil.ReadAll(reader); err == nil {
+		return parse(bts, charset)
+	} else {
+		return nil, err
+	}
 }
 
-func parse(bts []byte, charset string) (*WorkBook, error) {
-	ole, _ := ole2.Open(bts, charset)
-	dir, err := ole.ListDir()
-	var book *ole2.File
-	for _, file := range dir {
-		name := file.Name()
-		if name == "Workbook" {
-			book = file
-			// break
-		}
-		if name == "Book" {
-			book = file
-			// break
+func parse(bts []byte, charset string) (wb *WorkBook, err error) {
+	var ole *ole2.Ole
+	if ole, err = ole2.Open(bts, charset); err == nil {
+		var dir []*ole2.File
+		if dir, err = ole.ListDir(); err == nil {
+			var book *ole2.File
+			for _, file := range dir {
+				name := file.Name()
+				if name == "Workbook" {
+					book = file
+					// break
+				}
+				if name == "Book" {
+					book = file
+					// break
+				}
+			}
+			if book != nil {
+				wb = newWorkBookFromOle2(ole.OpenFile(book))
+				return
+			}
 		}
 
 	}
-	if book != nil {
-		wb := newWookBookFromOle2(ole.OpenFile(book))
-		return wb, nil
-	}
-	return nil, err
+	return
 }

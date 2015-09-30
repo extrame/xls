@@ -4,11 +4,13 @@ import (
 	"fmt"
 )
 
+// range type of multi rows
 type Ranger interface {
 	FirstRow() uint16
 	LastRow() uint16
 }
 
+// range type of multi cells in multi rows
 type CellRange struct {
 	FirstRowB uint16
 	LastRowB  uint16
@@ -32,6 +34,7 @@ func (c *CellRange) LastCol() uint16 {
 	return c.LastColB
 }
 
+//hyperlink type's content
 type HyperLink struct {
 	CellRange
 	Description      string
@@ -43,6 +46,7 @@ type HyperLink struct {
 	IsUrl            bool
 }
 
+//get the hyperlink string, use the public variable Url to get the original Url
 func (h *HyperLink) String(wb *WorkBook) []string {
 	res := make([]string, h.LastColB-h.FristColB+1)
 	var str string

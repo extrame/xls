@@ -26,12 +26,12 @@ type WorkSheet struct {
 
 func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	w.Rows = make(map[uint16]*Row)
-	bof := new(BOF)
-	var bof_pre *BOF
+	b := new(bof)
+	var bof_pre *bof
 	for {
-		if err := binary.Read(buf, binary.LittleEndian, bof); err == nil {
-			bof_pre = w.parseBof(buf, bof, bof_pre)
-			if bof.Id == 0xa {
+		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+			bof_pre = w.parseBof(buf, b, bof_pre)
+			if b.Id == 0xa {
 				break
 			}
 		} else {
@@ -41,9 +41,9 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	}
 }
 
-func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
+func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	var col interface{}
-	switch bof.Id {
+	switch b.Id {
 	// case 0x0E5: //MERGEDCELLS
 	// ws.mergedCells(buf)
 	case 0x208: //ROW
@@ -52,7 +52,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 		w.addRow(r)
 	case 0x0BD: //MULRK
 		mc := new(MulrkCol)
-		size := (bof.Size - 6) / 6
+		size := (b.Size - 6) / 6
 		binary.Read(buf, binary.LittleEndian, &mc.Col)
 		mc.Xfrks = make([]XfRk, size)
 		for i := uint16(0); i < size; i++ {
@@ -62,7 +62,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 		col = mc
 	case 0x0BE: //MULBLANK
 		mc := new(MulBlankCol)
-		size := (bof.Size - 6) / 2
+		size := (b.Size - 6) / 2
 		binary.Read(buf, binary.LittleEndian, &mc.Col)
 		mc.Xfs = make([]uint16, size)
 		for i := uint16(0); i < size; i++ {
@@ -76,7 +76,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 	case 0x06: //FORMULA
 		c := new(FormulaCol)
 		binary.Read(buf, binary.LittleEndian, &c.Header)
-		c.Bts = make([]byte, bof.Size-20)
+		c.Bts = make([]byte, b.Size-20)
 		binary.Read(buf, binary.LittleEndian, &c.Bts)
 		col = c
 	case 0x27e: //RK
@@ -98,11 +98,11 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 
 		if flag&0x14 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			hy.Description = bof.Utf16String(buf, count)
+			hy.Description = b.utf16String(buf, count)
 		}
 		if flag&0x80 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			hy.TargetFrame = bof.Utf16String(buf, count)
+			hy.TargetFrame = b.utf16String(buf, count)
 		}
 		if flag&0x1 != 0 {
 			var guid [2]uint64
@@ -110,7 +110,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 			if guid[0] == 0xE0C9EA79F9BACE11 && guid[1] == 0x8C8200AA004BA90B { //URL
 				hy.IsUrl = true
 				binary.Read(buf, binary.LittleEndian, &count)
-				hy.Url = bof.Utf16String(buf, count/2)
+				hy.Url = b.utf16String(buf, count/2)
 			} else if guid[0] == 0x303000000000000 && guid[1] == 0xC000000000000046 { //URL{
 				var upCount uint16
 				binary.Read(buf, binary.LittleEndian, &upCount)
@@ -123,7 +123,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 				if count > 0 {
 					binary.Read(buf, binary.LittleEndian, &count)
 					buf.Seek(2, 1)
-					hy.ExtendedFilePath = bof.Utf16String(buf, count/2+1)
+					hy.ExtendedFilePath = b.utf16String(buf, count/2+1)
 				}
 				log.Println(hy)
 			}
@@ -139,21 +139,21 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, bof *BOF, pre *BOF) *BOF {
 		w.addRange(&hy.CellRange, &hy)
 	case 0x809:
 		log.Println("sheet start")
-		buf.Seek(int64(bof.Size), 1)
+		buf.Seek(int64(b.Size), 1)
 	case 0xa:
 		log.Println("sheet end")
 	default:
-		// log.Printf("Unknow %X,%d\n", bof.Id, bof.Size)
-		buf.Seek(int64(bof.Size), 1)
+		// log.Printf("Unknow %X,%d\n", b.Id, b.Size)
+		buf.Seek(int64(b.Size), 1)
 	}
 	if col != nil {
 		w.add(col)
 	}
-	return bof
+	return b
 }
 
 func (w *WorkSheet) add(content interface{}) {
-	if ch, ok := content.(ContentHandler); ok {
+	if ch, ok := content.(contentHandler); ok {
 		if col, ok := content.(Coler); ok {
 			w.addCell(col, ch)
 		}
@@ -161,18 +161,18 @@ func (w *WorkSheet) add(content interface{}) {
 
 }
 
-func (w *WorkSheet) addCell(col Coler, ch ContentHandler) {
+func (w *WorkSheet) addCell(col Coler, ch contentHandler) {
 	w.addContent(col.Row(), ch)
 }
 
-func (w *WorkSheet) addRange(rang Ranger, ch ContentHandler) {
+func (w *WorkSheet) addRange(rang Ranger, ch contentHandler) {
 
 	for i := rang.FirstRow(); i <= rang.LastRow(); i++ {
 		w.addContent(i, ch)
 	}
 }
 
-func (w *WorkSheet) addContent(row_num uint16, ch ContentHandler) {
+func (w *WorkSheet) addContent(row_num uint16, ch contentHandler) {
 	var row *Row
 	var ok bool
 	if row, ok = w.Rows[row_num]; !ok {
@@ -191,7 +191,7 @@ func (w *WorkSheet) addRow(info *RowInfo) (row *Row) {
 	if row, ok = w.Rows[info.Index]; ok {
 		row.info = info
 	} else {
-		row = &Row{info: info, Cols: make(map[uint16]ContentHandler)}
+		row = &Row{info: info, Cols: make(map[uint16]contentHandler)}
 		w.Rows[info.Index] = row
 	}
 	return
