@@ -47,7 +47,6 @@ func parse(bts []byte, charset string) (wb *WorkBook, err error) {
 				return
 			}
 		}
-
 	}
 	return
 }

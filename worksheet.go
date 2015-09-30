@@ -17,10 +17,11 @@ type boundsheet struct {
 
 //WorkSheet in one WorkBook
 type WorkSheet struct {
-	bs     *boundsheet
-	wb     *WorkBook
-	Name   string
-	Rows   map[uint16]*Row
+	bs   *boundsheet
+	wb   *WorkBook
+	Name string
+	Rows map[uint16]*Row
+	//NOTICE: this is the max row number of the sheet, so it should be count -1
 	MaxRow uint16
 }
 

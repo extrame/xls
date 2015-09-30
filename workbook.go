@@ -10,13 +10,14 @@ import (
 
 //xls workbook type
 type WorkBook struct {
-	Is5ver         bool
-	Type           uint16
-	Codepage       uint16
-	Xfs            []st_xf_data
-	Fonts          []Font
-	Formats        map[uint16]*Format
-	Sheets         []*WorkSheet
+	Is5ver   bool
+	Type     uint16
+	Codepage uint16
+	Xfs      []st_xf_data
+	Fonts    []Font
+	Formats  map[uint16]*Format
+	//All the sheets from the workbook
+	sheets         []*WorkSheet
 	Author         string
 	rs             io.ReadSeeker
 	sst            []string
@@ -29,7 +30,7 @@ func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb.Formats = make(map[uint16]*Format)
 	// wb.bts = bts
 	wb.rs = rs
-	wb.Sheets = make([]*WorkSheet, 0)
+	wb.sheets = make([]*WorkSheet, 0)
 	wb.Parse(rs)
 	return wb
 }
@@ -199,22 +200,32 @@ func (w *WorkBook) get_string_from_bytes(bts []byte, size uint16) string {
 
 func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
 	name := w.get_string(buf, uint16(sheet.Name))
-	w.Sheets = append(w.Sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
+	w.sheets = append(w.sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
 }
 
 //reading a sheet from the compress file to memory, you should call this before you try to get anything from sheet
-func (w *WorkBook) PrepareSheet(sheet *WorkSheet) {
+func (w *WorkBook) prepareSheet(sheet *WorkSheet) {
 	w.rs.Seek(int64(sheet.bs.Filepos), 0)
 	sheet.parse(w.rs)
+}
+
+func (w *WorkBook) GetSheet(num int) *WorkSheet {
+	if num < len(w.sheets) {
+		s := w.sheets[num]
+		w.prepareSheet(s)
+		return s
+	} else {
+		return nil
+	}
 }
 
 //helper function to read all cells from file
 func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 	res = make([][]string, 0)
-	for _, sheet := range w.Sheets {
+	for _, sheet := range w.sheets {
 		if len(res) < max {
 			max = max - len(res)
-			w.PrepareSheet(sheet)
+			w.prepareSheet(sheet)
 			if sheet.MaxRow != 0 {
 				leng := int(sheet.MaxRow) + 1
 				if max < leng {
