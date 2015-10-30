@@ -43,11 +43,13 @@ type XfRk struct {
 }
 
 func (xf *XfRk) String(wb *WorkBook) string {
-	switch wb.Xfs[21].formatNo() {
-	case 27:
-		if f, e := xf.Rk.Float(); e == nil {
-			t := timeFromExcelTime(f, true)
-			return t.Format("2006.01") //TODO it should be international
+	if len(wb.Xfs) > 21 {
+		switch wb.Xfs[21].formatNo() {
+		case 27:
+			if f, e := xf.Rk.Float(); e == nil {
+				t := timeFromExcelTime(f, true)
+				return t.Format("2006.01") //TODO it should be international
+			}
 		}
 	}
 	return fmt.Sprintf("%s", xf.Rk.String())
