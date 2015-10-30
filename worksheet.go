@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"unicode/utf16"
 )
 
@@ -126,7 +125,6 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 					buf.Seek(2, 1)
 					hy.ExtendedFilePath = b.utf16String(buf, count/2+1)
 				}
-				log.Println(hy)
 			}
 		}
 		if flag&0x8 != 0 {
@@ -139,10 +137,8 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 
 		w.addRange(&hy.CellRange, &hy)
 	case 0x809:
-		log.Println("sheet start")
 		buf.Seek(int64(b.Size), 1)
 	case 0xa:
-		log.Println("sheet end")
 	default:
 		// log.Printf("Unknow %X,%d\n", b.Id, b.Size)
 		buf.Seek(int64(b.Size), 1)

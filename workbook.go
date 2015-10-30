@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"log"
 	"unicode/utf16"
 )
 
@@ -136,7 +135,6 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		binary.Read(buf_item, binary.LittleEndian, &f.Head)
 		f.str = wb.get_string(buf_item, f.Head.Size)
 		wb.addFormat(f)
-		log.Println(f.Head.Index, f.str)
 	}
 	return
 }
