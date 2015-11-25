@@ -3,6 +3,9 @@ package xls
 import (
 	"fmt"
 	"math"
+	"strconv"
+	"strings"
+	"time"
 )
 
 //content type
@@ -43,50 +46,64 @@ type XfRk struct {
 }
 
 func (xf *XfRk) String(wb *WorkBook) string {
-	if len(wb.Xfs) > 21 {
-		switch wb.Xfs[21].formatNo() {
-		case 27:
-			if f, e := xf.Rk.Float(); e == nil {
-				t := timeFromExcelTime(f, true)
-				return t.Format("2006.01") //TODO it should be international
+	idx := int(xf.Index)
+	if len(wb.Xfs) > idx {
+		fNo := wb.Xfs[idx].formatNo()
+		if fNo >= 164 { // user defined format
+			if fmt := wb.Formats[fNo]; fmt != nil && strings.Contains(fmt.str, "YY") {
+				i, f, isFloat := xf.Rk.number()
+				if !isFloat {
+					f = float64(i)
+				}
+				t := timeFromExcelTime(f, wb.dateMode == 1)
+				return t.Format(time.RFC3339) //TODO it should be international
 			}
+			// see http://www.openoffice.org/sc/excelfileformat.pdf
+		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || fNo <= 27 && fNo <= 36 || fNo <= 50 && fNo <= 58 { // jp. date format
+			i, f, isFloat := xf.Rk.number()
+			if !isFloat {
+				f = float64(i)
+			}
+			t := timeFromExcelTime(f, wb.dateMode == 1)
+			return t.Format("2006.01") //TODO it should be international
 		}
 	}
-	return fmt.Sprintf("%s", xf.Rk.String())
+	return xf.Rk.String()
 }
 
 type RK uint32
 
-func (rk RK) String() string {
+func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 	multiplied := rk & 1
 	isInt := rk & 2
 	val := rk >> 2
 	if isInt == 0 {
-		f := math.Float64frombits(uint64(val) << 34)
+		isFloat = true
+		floatNum = math.Float64frombits(uint64(val) << 34)
 		if multiplied != 0 {
-			f = f / 100
+			floatNum = floatNum / 100
 		}
-		return fmt.Sprintf("%.1f", f)
-	} else {
-		return fmt.Sprint(val)
+		return
 	}
+	return int64(val), 0, false
+}
+
+func (rk RK) String() string {
+	i, f, isFloat := rk.number()
+	if isFloat {
+		return fmt.Sprintf("%.1f", f)
+	}
+	return strconv.FormatInt(i, 10)
 }
 
 var ErrIsInt = fmt.Errorf("is int")
 
 func (rk RK) Float() (float64, error) {
-	multiplied := rk & 1
-	isInt := rk & 2
-	val := rk >> 2
-	if isInt == 0 {
-		f := math.Float64frombits(uint64(val) << 34)
-		if multiplied != 0 {
-			f = f / 100
-		}
-		return f, nil
-	} else {
-		return 0.0, ErrIsInt
+	_, f, isFloat := rk.number()
+	if !isFloat {
+		return 0, ErrIsInt
 	}
+	return f, nil
 }
 
 type MulrkCol struct {
@@ -153,7 +170,7 @@ type RkCol struct {
 }
 
 func (c *RkCol) String(wb *WorkBook) []string {
-	return []string{c.Xfrk.Rk.String()}
+	return []string{c.Xfrk.String(wb)}
 }
 
 type LabelsstCol struct {
