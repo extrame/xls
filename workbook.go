@@ -21,6 +21,7 @@ type WorkBook struct {
 	rs             io.ReadSeeker
 	sst            []string
 	continue_utf16 uint16
+	dateMode       uint16
 }
 
 //read workbook from ole2 file
@@ -135,6 +136,8 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		binary.Read(buf_item, binary.LittleEndian, &f.Head)
 		f.str = wb.get_string(buf_item, f.Head.Size)
 		wb.addFormat(f)
+	case 0x22: //DATEMODE
+		binary.Read(buf_item, binary.LittleEndian, &wb.dateMode)
 	}
 	return
 }
