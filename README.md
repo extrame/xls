@@ -2,7 +2,9 @@
 
 [![GoDoc](https://godoc.org/github.com/extrame/xls?status.svg)](https://godoc.org/github.com/extrame/xls)
 
-Pure Golang xls library writen by [MinkTech(chinese)](http://www.mink-tech.com)
+Pure Golang xls library writen by [MinkTech(chinese)](http://www.mink-tech.com). 
+
+Thanks for contributions from Tamás Gulácsi. 
 
 **English User please mailto** [Liu Ming](mailto:liuming@mink-tech.com)
 
