@@ -25,6 +25,11 @@ func OpenReader(reader io.ReadCloser, charset string) (*WorkBook, error) {
 	}
 }
 
+//Open xls file from binary
+func OpenBinary(bin []byte, charset string) (*WorkBook, error) {
+	return parse(bin, charset)
+}
+
 func parse(bts []byte, charset string) (wb *WorkBook, err error) {
 	var ole *ole2.Ole
 	if ole, err = ole2.Open(bts, charset); err == nil {
