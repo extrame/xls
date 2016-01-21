@@ -22,6 +22,7 @@ type WorkSheet struct {
 	Rows map[uint16]*Row
 	//NOTICE: this is the max row number of the sheet, so it should be count -1
 	MaxRow uint16
+	parsed bool
 }
 
 func (w *WorkSheet) parse(buf io.ReadSeeker) {
@@ -39,6 +40,7 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 			break
 		}
 	}
+	w.parsed = true
 }
 
 func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {

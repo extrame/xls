@@ -210,14 +210,22 @@ func (w *WorkBook) prepareSheet(sheet *WorkSheet) {
 	sheet.parse(w.rs)
 }
 
+//Get one sheet by its number
 func (w *WorkBook) GetSheet(num int) *WorkSheet {
 	if num < len(w.sheets) {
 		s := w.sheets[num]
-		w.prepareSheet(s)
+		if !s.parsed {
+			w.prepareSheet(s)
+		}
 		return s
 	} else {
 		return nil
 	}
+}
+
+//Get the number of all sheets, look into example
+func (w *WorkBook) NumSheets() int {
+	return len(w.sheets)
 }
 
 //helper function to read all cells from file

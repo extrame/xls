@@ -10,6 +10,15 @@ func ExampleOpen() {
 	}
 }
 
+func ExampleNumberSheets() {
+	if xlFile, err := Open("Table.xls", "utf-8"); err == nil {
+		for i := 0; i < xlFile.NumSheets(); i++ {
+			sheet := xlFile.GetSheet(i)
+			fmt.Println(sheet.Name)
+		}
+	}
+}
+
 //Output: read the content of first two cols in each row
 func ExampleWorkBook_GetSheet() {
 	if xlFile, err := Open("Table.xls", "utf-8"); err == nil {
