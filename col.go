@@ -183,6 +183,15 @@ func (c *LabelsstCol) String(wb *WorkBook) []string {
 	return []string{wb.sst[int(c.Sst)]}
 }
 
+type labelCol struct {
+	BlankCol
+	Str string
+}
+
+func (c *labelCol) String(wb *WorkBook) []string {
+	return []string{c.Str}
+}
+
 type BlankCol struct {
 	Col
 	Xf uint16

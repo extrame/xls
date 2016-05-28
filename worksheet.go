@@ -87,6 +87,13 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	case 0xFD: //LABELSST
 		col = new(LabelsstCol)
 		binary.Read(buf, binary.LittleEndian, col)
+	case 0x204:
+		c := new(labelCol)
+		binary.Read(buf, binary.LittleEndian, &c.BlankCol)
+		var count uint16
+		binary.Read(buf, binary.LittleEndian, &count)
+		c.Str = w.wb.get_string(buf, count)
+		col = c
 	case 0x201: //BLANK
 		col = new(BlankCol)
 		binary.Read(buf, binary.LittleEndian, col)

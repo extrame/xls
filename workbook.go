@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"os"
 	"unicode/utf16"
 )
 
@@ -59,6 +60,9 @@ func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
 }
 
 func (w *WorkBook) addFormat(format *Format) {
+	if w.Formats == nil {
+		os.Exit(1)
+	}
 	w.Formats[format.Head.Index] = format
 }
 
@@ -132,10 +136,10 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		binary.Read(buf_item, binary.LittleEndian, f)
 		wb.addFont(f, buf_item)
 	case 0x41E: //FORMAT
-		f := new(Format)
-		binary.Read(buf_item, binary.LittleEndian, &f.Head)
-		f.str = wb.get_string(buf_item, f.Head.Size)
-		wb.addFormat(f)
+		font := new(Format)
+		binary.Read(buf_item, binary.LittleEndian, &font.Head)
+		font.str = wb.get_string(buf_item, font.Head.Size)
+		wb.addFormat(font)
 	case 0x22: //DATEMODE
 		binary.Read(buf_item, binary.LittleEndian, &wb.dateMode)
 	}
@@ -229,6 +233,7 @@ func (w *WorkBook) NumSheets() int {
 }
 
 //helper function to read all cells from file
+//Notice: the max value is the limit of the max capacity of lines.
 func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 	res = make([][]string, 0)
 	for _, sheet := range w.sheets {
