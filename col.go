@@ -59,7 +59,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				return t.Format(time.RFC3339) //TODO it should be international
 			}
 			// see http://www.openoffice.org/sc/excelfileformat.pdf
-		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || fNo <= 27 && fNo <= 36 || fNo <= 50 && fNo <= 58 { // jp. date format
+		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
 			i, f, isFloat := xf.Rk.number()
 			if !isFloat {
 				f = float64(i)
