@@ -177,8 +177,13 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
 			}
 		} else {
 			var bts = make([]byte, size)
+			var bts1 = make([]uint16, size)
 			binary.Read(buf, binary.LittleEndian, &bts)
-			res = string(bts)
+			for k, v := range bts {
+				bts1[k] = uint16(v)
+			}
+			runes := utf16.Decode(bts1)
+			res = string(runes)
 		}
 		if flag&0x8 != 0 {
 			var bts []byte
