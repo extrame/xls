@@ -55,7 +55,7 @@ func (w *WorkBook) addXf(xf st_xf_data) {
 }
 
 func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
-	name := w.get_string(buf, uint16(font.NameB))
+	name, _ := w.get_string(buf, uint16(font.NameB))
 	w.Fonts = append(w.Fonts, Font{Info: font, Name: name})
 }
 
@@ -86,15 +86,18 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		if pre.Id == 0xfc {
 			var size uint16
 			var err error
-			if wb.continue_utf16 > 1 {
+			if wb.continue_utf16 >= 1 {
 				size = wb.continue_utf16
 				wb.continue_utf16 = 0
-				offset_pre--
 			} else {
 				err = binary.Read(buf_item, binary.LittleEndian, &size)
 			}
 			for err == nil && offset_pre < len(wb.sst) {
-				wb.sst[offset_pre] = wb.sst[offset_pre] + wb.get_string(buf_item, size)
+				var str string
+				// if size > 0 {
+				str, err = wb.get_string(buf_item, size)
+				wb.sst[offset_pre] = wb.sst[offset_pre] + str
+				// }
 				offset_pre++
 				err = binary.Read(buf_item, binary.LittleEndian, &size)
 			}
@@ -106,16 +109,19 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		info := new(SstInfo)
 		binary.Read(buf_item, binary.LittleEndian, info)
 		wb.sst = make([]string, info.Count)
-		for i := 0; i < int(info.Count); i++ {
-			var size uint16
+		var size uint16
+		var i = 0
+		for ; i < int(info.Count); i++ {
 			if err := binary.Read(buf_item, binary.LittleEndian, &size); err == nil || err == io.EOF {
-				wb.sst[i] = wb.sst[i] + wb.get_string(buf_item, size)
+				var str string
+				str, err = wb.get_string(buf_item, size)
+				wb.sst[i] = wb.sst[i] + str
 				if err == io.EOF {
-					offset = i
 					break
 				}
 			}
 		}
+		offset = i
 	case 0x85: // bOUNDSHEET
 		var bs = new(boundsheet)
 		binary.Read(buf_item, binary.LittleEndian, bs)
@@ -138,7 +144,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	case 0x41E: //FORMAT
 		font := new(Format)
 		binary.Read(buf_item, binary.LittleEndian, &font.Head)
-		font.str = wb.get_string(buf_item, font.Head.Size)
+		font.str, _ = wb.get_string(buf_item, font.Head.Size)
 		wb.addFormat(font)
 	case 0x22: //DATEMODE
 		binary.Read(buf_item, binary.LittleEndian, &wb.dateMode)
@@ -146,26 +152,24 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	return
 }
 
-func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
-	var res string
+func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err error) {
 	if w.Is5ver {
 		var bts = make([]byte, size)
-		buf.Read(bts)
-		return string(bts)
+		_, err = buf.Read(bts)
+		res = string(bts)
 	} else {
 		var richtext_num uint16
 		var phonetic_size uint32
 		var flag byte
-		binary.Read(buf, binary.LittleEndian, &flag)
+		err = binary.Read(buf, binary.LittleEndian, &flag)
 		if flag&0x8 != 0 {
-			binary.Read(buf, binary.LittleEndian, &richtext_num)
+			err = binary.Read(buf, binary.LittleEndian, &richtext_num)
 		}
 		if flag&0x4 != 0 {
-			binary.Read(buf, binary.LittleEndian, &phonetic_size)
+			err = binary.Read(buf, binary.LittleEndian, &phonetic_size)
 		}
 		if flag&0x1 != 0 {
 			var bts = make([]uint16, size)
-			var err error
 			var i = uint16(0)
 			for ; i < size && err == nil; i++ {
 				err = binary.Read(buf, binary.LittleEndian, &bts[i])
@@ -173,13 +177,19 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
 			runes := utf16.Decode(bts[:i])
 			res = string(runes)
 			if i < size {
-				w.continue_utf16 = size - i + 1
+				w.continue_utf16 = size - i
 			}
 		} else {
 			var bts = make([]byte, size)
+			var n int
+			n, err = buf.Read(bts)
+			if uint16(n) < size {
+				w.continue_utf16 = size - uint16(n)
+				err = io.EOF
+			}
+
 			var bts1 = make([]uint16, size)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			for k, v := range bts {
+			for k, v := range bts[:n] {
 				bts1[k] = uint16(v)
 			}
 			runes := utf16.Decode(bts1)
@@ -192,24 +202,19 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) string {
 			} else {
 				bts = make([]byte, 4*richtext_num)
 			}
-			binary.Read(buf, binary.LittleEndian, bts)
+			err = binary.Read(buf, binary.LittleEndian, bts)
 		}
 		if flag&0x4 != 0 {
 			var bts []byte
 			bts = make([]byte, phonetic_size)
-			binary.Read(buf, binary.LittleEndian, bts)
+			err = binary.Read(buf, binary.LittleEndian, bts)
 		}
 	}
-	return res
-}
-
-func (w *WorkBook) get_string_from_bytes(bts []byte, size uint16) string {
-	buf := bytes.NewReader(bts)
-	return w.get_string(buf, size)
+	return
 }
 
 func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
-	name := w.get_string(buf, uint16(sheet.Name))
+	name, _ := w.get_string(buf, uint16(sheet.Name))
 	w.sheets = append(w.sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
 }
 
