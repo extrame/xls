@@ -204,11 +204,12 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			}
 			err = binary.Read(buf, binary.LittleEndian, bts)
 		}
-		if flag&0x4 != 0 {
-			var bts []byte
-			bts = make([]byte, phonetic_size)
-			err = binary.Read(buf, binary.LittleEndian, bts)
-		}
+
+		//if flag&0x4 != 0 {
+		//	var bts []byte
+		//	bts = make([]byte, phonetic_size)
+		//	err = binary.Read(buf, binary.LittleEndian, bts)
+		//}
 	}
 	return
 }
