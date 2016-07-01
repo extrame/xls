@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"log"
 	"os"
 	"unicode/utf16"
 )
@@ -22,6 +23,8 @@ type WorkBook struct {
 	rs             io.ReadSeeker
 	sst            []string
 	continue_utf16 uint16
+	continue_rich  uint16
+	continue_apsb  uint32
 	dateMode       uint16
 }
 
@@ -94,10 +97,11 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 			}
 			for err == nil && offset_pre < len(wb.sst) {
 				var str string
-				// if size > 0 {
-				str, err = wb.get_string(buf_item, size)
-				wb.sst[offset_pre] = wb.sst[offset_pre] + str
-				// }
+				if size > 0 {
+					str, err = wb.get_string(buf_item, size)
+					wb.sst[offset_pre] = wb.sst[offset_pre] + str
+				}
+
 				offset_pre++
 				err = binary.Read(buf_item, binary.LittleEndian, &size)
 			}
@@ -158,15 +162,21 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 		_, err = buf.Read(bts)
 		res = string(bts)
 	} else {
-		var richtext_num uint16
-		var phonetic_size uint32
+		var richtext_num = uint16(0)
+		var phonetic_size = uint32(0)
 		var flag byte
 		err = binary.Read(buf, binary.LittleEndian, &flag)
 		if flag&0x8 != 0 {
 			err = binary.Read(buf, binary.LittleEndian, &richtext_num)
+		} else if w.continue_rich > 0 {
+			richtext_num = w.continue_rich
+			w.continue_rich = 0
 		}
 		if flag&0x4 != 0 {
 			err = binary.Read(buf, binary.LittleEndian, &phonetic_size)
+		} else if w.continue_apsb > 0 {
+			phonetic_size = w.continue_apsb
+			w.continue_apsb = 0
 		}
 		if flag&0x1 != 0 {
 			var bts = make([]uint16, size)
@@ -177,7 +187,7 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			runes := utf16.Decode(bts[:i])
 			res = string(runes)
 			if i < size {
-				w.continue_utf16 = size - i
+				w.continue_utf16 = size - i + 1
 			}
 		} else {
 			var bts = make([]byte, size)
@@ -195,19 +205,29 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			runes := utf16.Decode(bts1)
 			res = string(runes)
 		}
-		if flag&0x8 != 0 {
+		if richtext_num > 0 {
 			var bts []byte
+			var seek_size int64
 			if w.Is5ver {
-				bts = make([]byte, 2*richtext_num)
+				seek_size = int64(2 * richtext_num)
 			} else {
-				bts = make([]byte, 4*richtext_num)
+				seek_size = int64(4 * richtext_num)
 			}
+			bts = make([]byte, seek_size)
 			err = binary.Read(buf, binary.LittleEndian, bts)
+			if err == io.EOF {
+				w.continue_rich = richtext_num
+			}
+
+			// err = binary.Read(buf, binary.LittleEndian, bts)
 		}
-		if flag&0x4 != 0 {
+		if phonetic_size > 0 {
 			var bts []byte
 			bts = make([]byte, phonetic_size)
 			err = binary.Read(buf, binary.LittleEndian, bts)
+			if err == io.EOF {
+				w.continue_apsb = phonetic_size
+			}
 		}
 	}
 	return
@@ -244,6 +264,7 @@ func (w *WorkBook) NumSheets() int {
 
 //helper function to read all cells from file
 //Notice: the max value is the limit of the max capacity of lines.
+//Warning: the helper function will need big memeory if file is large.
 func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 	res = make([][]string, 0)
 	for _, sheet := range w.sheets {
