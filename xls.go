@@ -23,6 +23,7 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 		var dir []*ole2.File
 		if dir, err = ole.ListDir(); err == nil {
 			var book *ole2.File
+			var root *ole2.File
 			for _, file := range dir {
 				name := file.Name()
 				if name == "Workbook" {
@@ -33,9 +34,12 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 					book = file
 					// break
 				}
+				if name == "Root Entry" {
+					root = file
+				}
 			}
 			if book != nil {
-				wb = newWorkBookFromOle2(ole.OpenFile(book))
+				wb = newWorkBookFromOle2(ole.OpenFile(book, root))
 				return
 			}
 		}
