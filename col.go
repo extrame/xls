@@ -146,7 +146,7 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	return []string{fmt.Sprintf("%f", c.Float)}
+	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
 type FormulaCol struct {
