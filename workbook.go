@@ -115,10 +115,11 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		var size uint16
 		var i = 0
 		for ; i < int(info.Count); i++ {
-			if err := binary.Read(buf_item, binary.LittleEndian, &size); err == nil || err == io.EOF {
+			if err := binary.Read(buf_item, binary.LittleEndian, &size); err == nil {
 				var str string
 				str, err = wb.get_string(buf_item, size)
 				wb.sst[i] = wb.sst[i] + str
+
 				if err == io.EOF {
 					break
 				}
@@ -284,6 +285,7 @@ func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 								data = append(data, make([]string, col.LastCol()-uint16(len(data))+1)...)
 							}
 							str := col.String(w)
+
 							for i := uint16(0); i < col.LastCol()-col.FirstCol()+1; i++ {
 								data[col.FirstCol()+i] = str[i]
 							}

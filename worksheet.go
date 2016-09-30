@@ -49,7 +49,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	// case 0x0E5: //MERGEDCELLS
 	// ws.mergedCells(buf)
 	case 0x208: //ROW
-		r := new(RowInfo)
+		r := new(rowInfo)
 		binary.Read(buf, binary.LittleEndian, r)
 		w.addRow(r)
 	case 0x0BD: //MULRK
@@ -182,14 +182,14 @@ func (w *WorkSheet) addContent(row_num uint16, ch contentHandler) {
 	var row *Row
 	var ok bool
 	if row, ok = w.Rows[row_num]; !ok {
-		info := new(RowInfo)
+		info := new(rowInfo)
 		info.Index = row_num
 		row = w.addRow(info)
 	}
 	row.Cols[ch.FirstCol()] = ch
 }
 
-func (w *WorkSheet) addRow(info *RowInfo) (row *Row) {
+func (w *WorkSheet) addRow(info *rowInfo) (row *Row) {
 	if info.Index > w.MaxRow {
 		w.MaxRow = info.Index
 	}

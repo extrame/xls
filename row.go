@@ -1,6 +1,6 @@
 package xls
 
-type RowInfo struct {
+type rowInfo struct {
 	Index    uint16
 	Fcell    uint16
 	Lcell    uint16
@@ -11,6 +11,6 @@ type RowInfo struct {
 }
 
 type Row struct {
-	info *RowInfo
+	info *rowInfo
 	Cols map[uint16]contentHandler
 }
