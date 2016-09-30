@@ -91,7 +91,7 @@ func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 func (rk RK) String() string {
 	i, f, isFloat := rk.number()
 	if isFloat {
-		return fmt.Sprintf("%.1f", f)
+		return strconv.FormatFloat(f, 'f', -1, 64)
 	}
 	return strconv.FormatInt(i, 10)
 }
@@ -146,7 +146,7 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	return []string{fmt.Sprintf("%f", c.Float)}
+	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
 type FormulaCol struct {
