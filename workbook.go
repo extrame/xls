@@ -277,10 +277,10 @@ func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 					leng = max
 				}
 				temp := make([][]string, leng)
-				for k, row := range sheet.Rows {
+				for k, row := range sheet.rows {
 					data := make([]string, 0)
-					if len(row.Cols) > 0 {
-						for _, col := range row.Cols {
+					if len(row.cols) > 0 {
+						for _, col := range row.cols {
 							if uint16(len(data)) <= col.LastCol() {
 								data = append(data, make([]string, col.LastCol()-uint16(len(data))+1)...)
 							}

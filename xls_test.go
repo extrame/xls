@@ -7,20 +7,20 @@ import (
 )
 
 func TestOpen(t *testing.T) {
-	if xlFile, err := Open("Book1.xls", "utf-8"); err == nil {
+	if xlFile, err := Open("expenses.xls", "utf-8"); err == nil {
 		if sheet1 := xlFile.GetSheet(0); sheet1 != nil {
 			fmt.Println("Total Lines ", sheet1.MaxRow, sheet1.Name)
-			for i := 0; i < int(sheet1.MaxRow); i++ {
-				fmt.Printf("row %v point %v \n", i, sheet1.Rows[uint16(i)])
-				if sheet1.Rows[uint16(i)] == nil {
+			for i := 0; i <= int(sheet1.MaxRow); i++ {
+				fmt.Printf("row %v point %v \n", i, sheet1.Row(i))
+				if sheet1.Row(i) == nil {
 					continue
 				}
-				row := sheet1.Rows[uint16(i)]
-				for n, col := range row.Cols {
-					fmt.Println(n, "==>", col.String(xlFile), " ")
+				row := sheet1.Row(i)
+				for index := row.FirstCol(); index < row.LastCol(); index++ {
+					fmt.Println(index, "==>", row.Col(index), " ")
 				}
 				// col1 := .Cols[0]
-				// col2 := sheet1.Rows[uint16(i)].Cols[1]
+				// col2 := sheet1.Row(uint16(i)].Cols[1]
 				// fmt.Printf("\ncol1 %v \nCol2 %v \n", col1.String(xlFile), col2.String(xlFile))
 			}
 		}
@@ -42,16 +42,16 @@ func TestEuropeString(t *testing.T) {
 // 	for i := 0; i < xlFile.NumSheets(); i++ {
 // 		fmt.Println(xlFile.GetSheet(i).Name)
 // 		sheet := xlFile.GetSheet(i)
-// 		row := sheet.Rows[1]
+// 		row := sheet.Row(1]
 // 		for i, col := range row.Cols {
 // 			fmt.Println(i, col.String(xlFile))
 // 		}
 // 	}
 // 	// sheet1 := xlFile.GetSheet(0)
 // 	// fmt.Println(sheet1.Name)
-// 	// fmt.Print(sheet1.Rows)
-// 	// for k, row1 := range sheet1.Rows {
-// 	// 	// row1 := sheet1.Rows[1]
+// 	// fmt.Print(sheet1.Row()
+// 	// for k, row1 := range sheet1.Row({
+// 	// 	// row1 := sheet1.Row(1]
 // 	// 	fmt.Printf("\n[%d]", k)
 // 	// 	for _, col1 := range row1.Cols {
 // 	// 		// col1 := row1.Cols[0]
