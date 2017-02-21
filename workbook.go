@@ -115,14 +115,15 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		var size uint16
 		var i = 0
 		for ; i < int(info.Count); i++ {
-			if err := binary.Read(buf_item, binary.LittleEndian, &size); err == nil {
+			var err error
+			if err = binary.Read(buf_item, binary.LittleEndian, &size); err == nil {
 				var str string
 				str, err = wb.get_string(buf_item, size)
 				wb.sst[i] = wb.sst[i] + str
+			}
 
-				if err == io.EOF {
-					break
-				}
+			if err == io.EOF {
+				break
 			}
 		}
 		offset = i
