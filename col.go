@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"time"
+
+	"github.com/extrame/goyymmdd"
 )
 
 //content type
@@ -49,14 +50,14 @@ func (xf *XfRk) String(wb *WorkBook) string {
 	if len(wb.Xfs) > idx {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
-			if fmt := wb.Formats[fNo]; fmt != nil {
+			if formatter := wb.Formats[fNo]; formatter != nil {
 				i, f, isFloat := xf.Rk.number()
 				if !isFloat {
 					f = float64(i)
 				}
+				fmt.Println(formatter.str, "======")
 				t := timeFromExcelTime(f, wb.dateMode == 1)
-
-				return t.Format(time.RFC3339) //TODO it should be international and format as the describled style
+				return yymmdd.Format(t, formatter.str)
 			}
 			// see http://www.openoffice.org/sc/excelfileformat.pdf
 		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
@@ -64,6 +65,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 			if !isFloat {
 				f = float64(i)
 			}
+			fmt.Println(fNo)
 			t := timeFromExcelTime(f, wb.dateMode == 1)
 			return t.Format("2006.01") //TODO it should be international
 		}
@@ -85,6 +87,13 @@ func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 		}
 		return
 	}
+	//+++ add lines from here
+	if multiplied != 0 {
+		isFloat = true
+		floatNum = float64(val) / 100
+		return
+	}
+	//+++end
 	return int64(val), 0, false
 }
 

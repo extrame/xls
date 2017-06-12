@@ -2,11 +2,11 @@
 
 [![GoDoc](https://godoc.org/github.com/extrame/xls?status.svg)](https://godoc.org/github.com/extrame/xls)
 
-Pure Golang xls library writen by [MinkTech(chinese)](http://www.mink-tech.com). 
+Pure Golang xls library writen by [Rongshu Tech(chinese)](http://www.rongshu.tech). 
 
-Thanks for contributions from Tamás Gulácsi. 
+Thanks for contributions from Tamás Gulácsi, sergeilem.
 
-**English User please mailto** [Liu Ming](mailto:liuming@mink-tech.com)
+**English User please mailto** [Liu Ming](mailto:liuming@rongshu.tech)
 
 This is a xls library writen in pure Golang. Almostly it is translated from the libxls library in c.
 
