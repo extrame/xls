@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-
-	"github.com/extrame/goyymmdd"
 )
 
 //content type
