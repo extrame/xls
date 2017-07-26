@@ -55,7 +55,6 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				if !isFloat {
 					f = float64(i)
 				}
-				fmt.Println(formatter.str, "======")
 				t := timeFromExcelTime(f, wb.dateMode == 1)
 				return yymmdd.Format(t, formatter.str)
 			}
