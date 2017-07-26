@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 
+	"time"
+
 	"github.com/extrame/goyymmdd"
 )
 
@@ -58,15 +60,14 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				t := timeFromExcelTime(f, wb.dateMode == 1)
 				return yymmdd.Format(t, formatter.str)
 			}
-			// see http://www.openoffice.org/sc/excelfileformat.pdf
+			// see http://www.openoffice.org/sc/excelfileformat.pdf Page #174
 		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
 			i, f, isFloat := xf.Rk.number()
 			if !isFloat {
 				f = float64(i)
 			}
-			fmt.Println(fNo)
 			t := timeFromExcelTime(f, wb.dateMode == 1)
-			return t.Format("2006.01") //TODO it should be international
+			return t.Format(time.RFC3339) //TODO it should be international
 		}
 	}
 	return xf.Rk.String()
