@@ -1,4 +1,4 @@
-package xls
+package format
 
 import (
 	"math"
@@ -69,7 +69,7 @@ func doTheFliegelAndVanFlandernAlgorithm(jd int) (day, month, year int) {
 }
 
 // Convert an excelTime representation (stored as a floating point number) to a time.Time.
-func timeFromExcelTime(excelTime float64, date1904 bool) time.Time {
+func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 	var date time.Time
 	var intPart int64 = int64(excelTime)
 	// Excel uses Julian dates prior to March 1st 1900, and

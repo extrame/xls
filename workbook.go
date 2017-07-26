@@ -15,7 +15,7 @@ type WorkBook struct {
 	Codepage uint16
 	Xfs      []st_xf_data
 	Fonts    []Font
-	Formats  map[uint16]*Format
+	Formats  map[uint16]*format
 	//All the sheets from the workbook
 	sheets         []*WorkSheet
 	Author         string
@@ -30,7 +30,7 @@ type WorkBook struct {
 //read workbook from ole2 file
 func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb := new(WorkBook)
-	wb.Formats = make(map[uint16]*Format)
+	wb.Formats = make(map[uint16]*format)
 	// wb.bts = bts
 	wb.rs = rs
 	wb.sheets = make([]*WorkSheet, 0)
@@ -61,11 +61,11 @@ func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
 	w.Fonts = append(w.Fonts, Font{Info: font, Name: name})
 }
 
-func (w *WorkBook) addFormat(format *Format) {
+func (w *WorkBook) addFormat(fmt *format) {
 	if w.Formats == nil {
 		os.Exit(1)
 	}
-	w.Formats[format.Head.Index] = format
+	w.Formats[fmt.Head.Index] = fmt
 }
 
 func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int) (after *bof, after_using *bof, offset int) {
@@ -147,7 +147,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		binary.Read(buf_item, binary.LittleEndian, f)
 		wb.addFont(f, buf_item)
 	case 0x41E: //FORMAT
-		font := new(Format)
+		font := new(format)
 		binary.Read(buf_item, binary.LittleEndian, &font.Head)
 		font.str, _ = wb.get_string(buf_item, font.Head.Size)
 		wb.addFormat(font)
