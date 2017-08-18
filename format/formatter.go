@@ -18,7 +18,6 @@ func (f *Formatter) Format(val float64, date1904 bool) string {
 		itemFormatString, _ := i.translateToGolangFormat()
 		gf += itemFormatString
 	}
-	fmt.Println(f)
 	if f.typ == DATEFORMAT {
 		t := TimeFromExcelTime(val, date1904)
 		return t.Format(gf)
@@ -45,6 +44,22 @@ func (self *basicFormatter) setOriginal(o string) {
 }
 
 func (self *basicFormatter) String() string {
+	return fmt.Sprintf("basic formatter as (%s)", self.origin)
+}
+
+type commaFormatter struct {
+	basicFormatter
+}
+
+func (self *commaFormatter) translateToGolangFormat() (string, error) {
+	return self.origin, nil
+}
+
+func (self *commaFormatter) setOriginal(o string) {
+	self.origin = o
+}
+
+func (self *commaFormatter) String() string {
 	return fmt.Sprintf("basic formatter as (%s)", self.origin)
 }
 
