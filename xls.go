@@ -27,7 +27,10 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 			for _, file := range dir {
 				name := file.Name()
 				if name == "Workbook" {
-					book = file
+					if book == nil {
+						book = file
+					}
+					//book = file
 					// break
 				}
 				if name == "Book" {
