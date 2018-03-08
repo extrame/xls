@@ -4,6 +4,10 @@
 
 Pure Golang xls library writen by [Rongshu Tech(chinese)](http://www.rongshu.tech). 
 
+
+#new_formaater# branch is under test, if you have the problem about the output format, try it and tell me the problem, I will try to fix it.
+
+
 Thanks for contributions from Tamás Gulácsi, sergeilem.
 
 **English User please mailto** [Liu Ming](mailto:liuming@rongshu.tech)
