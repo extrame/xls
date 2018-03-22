@@ -101,6 +101,10 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 					wb.sst[offset_pre] = wb.sst[offset_pre] + str
 				}
 
+				if err == io.EOF {
+					break
+				}
+
 				offset_pre++
 				err = binary.Read(buf_item, binary.LittleEndian, &size)
 			}
