@@ -16,6 +16,16 @@ func Open(file string, charset string) (*WorkBook, error) {
 	}
 }
 
+//Open one xls file and return the closer
+func OpenWithCloser(file string, charset string) (*WorkBook, io.Closer, error) {
+	if fi, err := os.Open(file); err == nil {
+		wb, err := OpenReader(fi, charset)
+		return wb, fi, err
+	} else {
+		return nil, nil, err
+	}
+}
+
 //Open xls file from reader
 func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) {
 	var ole *ole2.Ole

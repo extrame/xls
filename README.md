@@ -4,22 +4,21 @@
 
 Pure Golang xls library writen by [Rongshu Tech(chinese)](http://www.rongshu.tech). 
 
-
-#new_formaater# branch is under test, if you have the problem about the output format, try it and tell me the problem, I will try to fix it.
-
-
 Thanks for contributions from Tamás Gulácsi, sergeilem.
 
 **English User please mailto** [Liu Ming](mailto:liuming@rongshu.tech)
 
 This is a xls library writen in pure Golang. Almostly it is translated from the libxls library in c.
 
-It has just the reading function without the format.
+The master brunch has just the reading function without the format. 
+
+***new_formater** branch is for better format for date and number ,but just under test, you can try it in development environment. If you have some problem about the output format, tell me the problem, I will try to fix it.*
 
 # Basic Usage
 
 * Use **Open** function for open file
-* Use **OpenReader** function for open xls from a reader
+* Use **OpenWithCloser** function for open file and use the return value closer for close file
+* Use **OpenReader** function for open xls from a reader, you should close related file in your own code
 
 * Follow the example in GODOC
 
