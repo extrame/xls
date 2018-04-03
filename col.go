@@ -52,7 +52,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 	if len(wb.Xfs) > idx {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
-			if formatter := wb.Formats[fNo]; formatter != nil {
+			if formatter := wb.Formats[fNo]; formatter != nil && false {
 				i, f, isFloat := xf.Rk.number()
 				if !isFloat {
 					f = float64(i)
