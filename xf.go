@@ -1,5 +1,9 @@
 package xls
 
+type XF interface {
+	FormatNo() uint16
+}
+
 type Xf5 struct {
 	Font      uint16
 	Format    uint16
@@ -11,7 +15,7 @@ type Xf5 struct {
 	Linestyle uint16
 }
 
-func (x *Xf5) formatNo() uint16 {
+func (x *Xf5) FormatNo() uint16 {
 	return x.Format
 }
 
@@ -28,10 +32,6 @@ type Xf8 struct {
 	Groundcolor uint16
 }
 
-func (x *Xf8) formatNo() uint16 {
+func (x *Xf8) FormatNo() uint16 {
 	return x.Format
-}
-
-type st_xf_data interface {
-	formatNo() uint16
 }

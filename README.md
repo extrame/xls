@@ -1,8 +1,9 @@
 # xls
 
-[![GoDoc](https://godoc.org/github.com/extrame/xls?status.svg)](https://godoc.org/github.com/extrame/xls)
+[![GoDoc](https://godoc.org/github.com/csg800/xls?status.svg)](https://godoc.org/github.com/csg800/xls)
 
 Pure Golang xls library writen by [Rongshu Tech(chinese)](http://www.rongshu.tech). 
+Add Formula & Format support by [chen.s.g] (http://www.imohe.com)
 
 Thanks for contributions from Tamás Gulácsi, sergeilem.
 

@@ -46,6 +46,10 @@ type HyperLink struct {
 	IsUrl            bool
 }
 
+func (h *HyperLink) Debug(wb *WorkBook) {
+	fmt.Printf("hyper link col dump:%#+v\n", h)
+}
+
 //get the hyperlink string, use the public variable Url to get the original Url
 func (h *HyperLink) String(wb *WorkBook) []string {
 	res := make([]string, h.LastColB-h.FristColB+1)
