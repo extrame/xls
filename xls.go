@@ -3,7 +3,7 @@ package xls
 import (
 	"io"
 	"os"
-
+	"log"
 	"github.com/extrame/ole2"
 )
 
@@ -51,6 +51,8 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 			if book != nil {
 				wb = newWorkBookFromOle2(ole.OpenFile(book, root))
 				return
+			} else {
+				log.Panic("book == nil")
 			}
 		}
 	}
