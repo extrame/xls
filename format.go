@@ -139,17 +139,9 @@ func (f *Format) String(v float64) string {
 
 	switch f.vType {
 	case TYPE_NUMERIC:
-		if 0 == f.bts {
-			ret = strconv.FormatInt(int64(v), 10)
-		} else {
-			ret = strconv.FormatFloat(v, 'f', f.bts, 64)
-		}
+		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
 	case TYPE_CURRENCY:
-		if 0 == f.bts {
-			ret = strconv.FormatInt(int64(v), 10)
-		} else {
-			ret = strconv.FormatFloat(v, 'f', f.bts, 64)
-		}
+		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
 	case TYPE_PERCENTAGE:
 		if 0 == f.bts {
 			ret = strconv.FormatInt(int64(v)*100, 10) + "%"
