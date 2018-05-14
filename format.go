@@ -139,6 +139,10 @@ func (f *Format) String(v float64) string {
 
 	switch f.vType {
 	case TYPE_NUMERIC:
+		if 0 == f.bts && nil != f.Raw && "general" == f.Raw[0] {
+			f.bts = -1
+		}
+
 		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
 	case TYPE_CURRENCY:
 		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
