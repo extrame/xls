@@ -121,13 +121,14 @@ func (f *Format) Prepare() {
 	}
 
 	if TYPE_NUMERIC == f.vType || TYPE_CURRENCY == f.vType || TYPE_PERCENTAGE == f.vType {
-		var t []string
-		if t = strings.SplitN(f.Raw[0], ".", 2); 2 == len(t) {
+		if t := strings.SplitN(f.Raw[0], ".", 2); 2 == len(t) {
 			f.bts = strings.Count(t[1], "")
 
 			if f.bts > 0 {
 				f.bts = f.bts - 1
 			}
+		} else if t := strings.Index(f.Raw[0], "General"); t > 0 {
+			f.bts = -1
 		}
 	}
 }

@@ -180,6 +180,10 @@ func (c *NumberCol) Debug(wb *WorkBook) {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
+	if wb.Debug {
+		fmt.Printf("number col dump:%#+v\n", c)
+	}
+
 	if v, ok := wb.Format(c.Index, c.Float); ok {
 		return []string{v}
 	}
