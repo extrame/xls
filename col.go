@@ -260,6 +260,10 @@ func (c *FormulaCol) String(wb *WorkBook) []string {
 		c.parse(wb, true)
 	}
 
+	if wb.Debug {
+		fmt.Printf("formula col dump:%#+v\n", c)
+	}
+
 	return []string{c.value}
 }
 
@@ -404,6 +408,10 @@ func (c *LabelsstCol) Debug(wb *WorkBook) {
 }
 
 func (c *LabelsstCol) String(wb *WorkBook) []string {
+	if wb.Debug {
+		fmt.Println("metlabel sst col dump:", c.Sst, wb.sst[int(c.Sst)])
+	}
+
 	return []string{wb.sst[int(c.Sst)]}
 }
 

@@ -10,6 +10,7 @@ import (
 
 //xls workbook type
 type WorkBook struct {
+	Debug          bool
 	Is5ver         bool
 	Type           uint16
 	Codepage       uint16
@@ -40,6 +41,11 @@ func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb.prepare()
 
 	return wb
+}
+
+// SetDebug set debug flag
+func (w *WorkBook) SetDebug(debug bool) {
+	w.Debug = debug
 }
 
 func (w *WorkBook) parse(buf io.ReadSeeker) {
