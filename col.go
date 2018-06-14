@@ -204,7 +204,7 @@ func (f *FormulaColHeader) Value() float64 {
 	var rknumhigh = ByteToUint32(f.Result[4:8])
 	var rknumlow = ByteToUint32(f.Result[0:4])
 	var sign = (rknumhigh & 0x80000000) >> 31
-	var exp = float64(((rknumhigh & 0x7ff00000) >> 20) - 1023)
+	var exp = float64(((int32(rknumhigh) & 0x7ff00000) >> 20) - 1023)
 	var mantissa = (0x100000 | (rknumhigh & 0x000fffff))
 	var mantissalow1 = (rknumlow & 0x80000000) >> 31
 	var mantissalow2 = (rknumlow & 0x7fffffff)
