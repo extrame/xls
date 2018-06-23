@@ -1,7 +1,9 @@
 package xls
 
 import (
+	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/extrame/ole2"
@@ -16,7 +18,16 @@ func Open(file string, charset string) (*WorkBook, error) {
 	}
 }
 
-//Open one xls file and return the closer
+//OpenWithBuffer open one xls file with memory buffer
+func OpenWithBuffer(file string, charset string) (*WorkBook, error) {
+	if fi, err := ioutil.ReadFile(file); err == nil {
+		return OpenReader(bytes.NewReader(fi), charset)
+	} else {
+		return nil, err
+	}
+}
+
+//OpenWithCloser open one xls file and return the closer
 func OpenWithCloser(file string, charset string) (*WorkBook, io.Closer, error) {
 	if fi, err := os.Open(file); err == nil {
 		wb, err := OpenReader(fi, charset)
@@ -26,7 +37,7 @@ func OpenWithCloser(file string, charset string) (*WorkBook, io.Closer, error) {
 	}
 }
 
-//Open xls file from reader
+//OpenReader open xls file from reader
 func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) {
 	var ole *ole2.Ole
 	if ole, err = ole2.Open(reader, charset); err == nil {

@@ -2,6 +2,7 @@ package xls
 
 import (
 	"fmt"
+	"testing"
 )
 
 func ExampleOpen() {
@@ -31,6 +32,26 @@ func ExampleWorkBook_GetSheet() {
 				col1 = row1.Col(0)
 				col2 = row1.Col(1)
 				fmt.Print("\n", col1, ",", col2)
+			}
+		}
+	}
+}
+
+func BenchmarkGetSheet(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if xlFile, err := Open("Table.xls", "utf-8"); err == nil {
+			for i := 0; i < xlFile.NumSheets(); i++ {
+				xlFile.GetSheet(i)
+			}
+		}
+	}
+}
+
+func BenchmarkGetSheetWithBuffer(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if xlFile, err := OpenWithBuffer("Table.xls", "utf-8"); err == nil {
+			for i := 0; i < xlFile.NumSheets(); i++ {
+				xlFile.GetSheet(i)
 			}
 		}
 	}
