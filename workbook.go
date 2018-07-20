@@ -92,14 +92,16 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 				size = wb.continue_utf16
 				wb.continue_utf16 = 0
 			} else {
-				err = binary.Read(buf_item, binary.LittleEndian, &size)
+				if wb.continue_rich > 0 || wb.continue_apsb > 0 {
+					size = 0
+				} else {
+					err = binary.Read(buf_item, binary.LittleEndian, &size)
+				}
 			}
 			for err == nil && offset_pre < len(wb.sst) {
 				var str string
-				if size > 0 {
-					str, err = wb.get_string(buf_item, size)
-					wb.sst[offset_pre] = wb.sst[offset_pre] + str
-				}
+				str, err = wb.get_string(buf_item, size)
+				wb.sst[offset_pre] = wb.sst[offset_pre] + str
 
 				if err == io.EOF {
 					break
@@ -170,9 +172,14 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 		var richtext_num = uint16(0)
 		var phonetic_size = uint32(0)
 		var flag byte
-		err = binary.Read(buf, binary.LittleEndian, &flag)
+		if size == 0 && (w.continue_rich > 0 || w.continue_apsb > 0) {
+			flag = 0
+		} else {
+			err = binary.Read(buf, binary.LittleEndian, &flag)
+		}
 		if flag&0x8 != 0 {
 			err = binary.Read(buf, binary.LittleEndian, &richtext_num)
+			richtext_num = 4 * richtext_num
 		} else if w.continue_rich > 0 {
 			richtext_num = w.continue_rich
 			w.continue_rich = 0
@@ -183,18 +190,21 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			phonetic_size = w.continue_apsb
 			w.continue_apsb = 0
 		}
-		if flag&0x1 != 0 {
+		if flag&0x1 != 0 && size > 0 {
 			var bts = make([]uint16, size)
 			var i = uint16(0)
-			for ; i < size && err == nil; i++ {
+			for ; i < size; i++ {
 				err = binary.Read(buf, binary.LittleEndian, &bts[i])
+				if err != nil {
+					break
+				}
 			}
 			runes := utf16.Decode(bts[:i])
 			res = string(runes)
 			if i < size {
-				w.continue_utf16 = size - i + 1
+				w.continue_utf16 = size - i
 			}
-		} else {
+		} else if size > 0 {
 			var bts = make([]byte, size)
 			var n int
 			n, err = buf.Read(bts)
@@ -211,27 +221,19 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			res = string(runes)
 		}
 		if richtext_num > 0 {
-			var bts []byte
-			var seek_size int64
-			if w.Is5ver {
-				seek_size = int64(2 * richtext_num)
-			} else {
-				seek_size = int64(4 * richtext_num)
+			var bts = make([]byte, richtext_num)
+			var n int
+			n, err = buf.Read(bts)
+			if uint16(n) < richtext_num {
+				w.continue_rich = richtext_num - uint16(n)
 			}
-			bts = make([]byte, seek_size)
-			err = binary.Read(buf, binary.LittleEndian, bts)
-			if err == io.EOF {
-				w.continue_rich = richtext_num
-			}
-
-			// err = binary.Read(buf, binary.LittleEndian, bts)
 		}
 		if phonetic_size > 0 {
-			var bts []byte
-			bts = make([]byte, phonetic_size)
-			err = binary.Read(buf, binary.LittleEndian, bts)
-			if err == io.EOF {
-				w.continue_apsb = phonetic_size
+			var bts = make([]byte, phonetic_size)
+			var n int
+			n, err = buf.Read(bts)
+			if uint32(n) < phonetic_size {
+				w.continue_apsb = phonetic_size - uint32(n)
 			}
 		}
 	}
