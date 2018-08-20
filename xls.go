@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/extrame/ole2"
 )
@@ -46,16 +47,16 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 			var book *ole2.File
 			var root *ole2.File
 			for _, file := range dir {
-				name := file.Name()
-				if name == "Workbook" {
+				name := strings.ToLower(file.Name())
+				if name == "workbook" {
 					book = file
 					// break
 				}
-				if name == "Book" {
+				if name == "book" {
 					book = file
 					// break
 				}
-				if name == "Root Entry" {
+				if name == "root entry" {
 					root = file
 				}
 			}
