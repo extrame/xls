@@ -80,6 +80,7 @@ type Format struct {
 // Prepare format meta data
 func (f *Format) Prepare() {
 	var regexColor = regexp.MustCompile("^\\[[a-zA-Z]+\\]")
+	var regexSharp = regexp.MustCompile("^\\d+\\.?\\d?#+")
 	var regexFraction = regexp.MustCompile("#\\,?#*")
 
 	for k, v := range f.Raw {
@@ -99,6 +100,11 @@ func (f *Format) Prepare() {
 
 		// strip color information
 		v = regexColor.ReplaceAllString(v, "")
+
+		// replace 0.0#### as 0.00000
+		if regexSharp.MatchString(v) {
+			v = strings.Replace(v, "#", "0", -1)
+		}
 
 		// Strip #
 		v = regexFraction.ReplaceAllString(v, "")
@@ -127,7 +133,9 @@ func (f *Format) Prepare() {
 			if f.bts > 0 {
 				f.bts = f.bts - 1
 			}
-		} else if t := strings.Index(f.Raw[0], "General"); t > 0 {
+		} else if t := strings.Index(f.Raw[0], "General"); -1 != t {
+			f.bts = -1
+		} else if t := strings.Index(f.Raw[0], "@"); -1 != t {
 			f.bts = -1
 		}
 	}
