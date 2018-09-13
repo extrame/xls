@@ -85,7 +85,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	case 0x042: // CODEPAGE
 		binary.Read(buf_item, binary.LittleEndian, &wb.Codepage)
 	case 0x3c: // CONTINUE
-		//FIX: sergeilem@gmail.com: step back if previous element not yet completed
+		// step back if previous element not yet completed
 		if wb.continue_utf16 > 0 {
 			offset_pre--
 		}
@@ -123,8 +123,8 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		wb.sst = make([]string, info.Count)
 		var size uint16
 		var i = 0
-		//FIX: sergeilem@gmail.com: initialize offset
-		offset = i
+		// dont forget to initialize offset
+		offset = 0
 		for ; i < int(info.Count); i++ {
 			var err error
 			if err = binary.Read(buf_item, binary.LittleEndian, &size); err == nil {
@@ -193,13 +193,13 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 		if flag&0x1 != 0 {
 			var bts = make([]uint16, size)
 			var i = uint16(0)
-			//FIX: sergeilem@gmail.com: we need local err here
+			// we need local err here
 			var err error
 			for ; i < size && err == nil; i++ {
 				err = binary.Read(buf, binary.LittleEndian, &bts[i])
 			}
 
-			//FIX: sergeilem@gmail.com: dont append extra
+			// when eof found, we dont want to append last element
 			var runes []rune
 			if err == io.EOF {
 				runes = utf16.Decode(bts[:i-1])
