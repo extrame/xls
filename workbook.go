@@ -78,10 +78,11 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		wb.Type = bif.Type
 	case 0x0042: // CODEPAGE
 		binary.Read(item, binary.LittleEndian, &wb.Codepage)
-	case 0x3C: // CONTINUE
-		if pre.Id == 0xfc {
-			var size uint16
+	case 0x003c: // SST CONTINUE identifier
+		if pre.Id == 0x00fc {
 			var err error
+			var str string
+			var size uint16
 			if wb.continue_utf16 >= 1 {
 				size = wb.continue_utf16
 				wb.continue_utf16 = 0
@@ -89,9 +90,8 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 				err = binary.Read(item, binary.LittleEndian, &size)
 			}
 			for err == nil && offset_pre < len(wb.sst) {
-				var str string
 				if size > 0 {
-					str, err = wb.parseString(item, size)
+					str, err = wb.parseString(item, size, "sst continue")
 					wb.sst[offset_pre] = wb.sst[offset_pre] + str
 				}
 
@@ -106,17 +106,17 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		offset = offset_pre
 		after = pre
 		after_using = b
-	case 0x00FC: // SST
+	case 0x00fc: // SST identifier
 		info := new(SstInfo)
 		binary.Read(item, binary.LittleEndian, info)
 		wb.sst = make([]string, info.Count)
+		var err error
+		var str string
 		var size uint16
 		var i = 0
 		for ; i < int(info.Count); i++ {
-			var err error
 			if err = binary.Read(item, binary.LittleEndian, &size); err == nil {
-				var str string
-				str, err = wb.parseString(item, size)
+				str, err = wb.parseString(item, size, "sst")
 				wb.sst[i] = wb.sst[i] + str
 			}
 
@@ -150,10 +150,10 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		f := new(FontInfo)
 		binary.Read(item, binary.LittleEndian, f)
 		wb.addFont(f, item)
-	case 0x041E: //FORMAT
+	case 0x041e: //FORMAT
 		format := new(Format)
 		binary.Read(item, binary.LittleEndian, &format.Head)
-		if raw, err := wb.parseString(item, format.Head.Size); nil == err && "" != raw {
+		if raw, err := wb.parseString(item, format.Head.Size, "format"); nil == err && "" != raw {
 			format.Raw = strings.Split(raw, ";")
 		} else {
 			format.Raw = []string{}
@@ -171,7 +171,7 @@ func (w *WorkBook) addXf(xf XF) {
 }
 
 func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
-	name, _ := w.parseString(buf, uint16(font.NameB))
+	name, _ := w.parseString(buf, uint16(font.NameB), "font")
 	w.Fonts = append(w.Fonts, Font{Info: font, Name: name})
 }
 
@@ -180,7 +180,7 @@ func (w *WorkBook) addFormat(format *Format) {
 }
 
 func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
-	name, _ := w.parseString(buf, uint16(sheet.Name))
+	name, _ := w.parseString(buf, uint16(sheet.Name), "sheet")
 	w.sheets = append(w.sheets, &WorkSheet{id: len(w.sheets), bs: sheet, Name: name, wb: w})
 }
 
@@ -204,7 +204,7 @@ func (w *WorkBook) prepareSheet(sheet *WorkSheet) {
 	sheet.parse(w.rs)
 }
 
-func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16) (res string, err error) {
+func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res string, err error) {
 	if w.Is5ver {
 		var bts = make([]byte, size)
 		_, err = buf.Read(bts)
@@ -214,18 +214,24 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16) (res string, err 
 		var phonetic_size = uint32(0)
 		var flag byte
 		err = binary.Read(buf, binary.LittleEndian, &flag)
+
+		// Rich-Text settings (richtext), 0 = Does not contain Rich-Text settings, 1 = Contains Rich-Text settings
 		if flag&0x8 != 0 {
 			err = binary.Read(buf, binary.LittleEndian, &richtext_num)
 		} else if w.continue_rich > 0 {
 			richtext_num = w.continue_rich
 			w.continue_rich = 0
 		}
+
+		// Asian phonetic settings, 0 = Does not contain Asian phonetic settings, 1 = Contains Asian phonetic settings
 		if flag&0x4 != 0 {
 			err = binary.Read(buf, binary.LittleEndian, &phonetic_size)
 		} else if w.continue_apsb > 0 {
 			phonetic_size = w.continue_apsb
 			w.continue_apsb = 0
 		}
+
+		// Character compression, 0 = Compressed (8-bit characters), 1 = Uncompressed (16-bit characters)
 		if flag&0x1 != 0 {
 			var bts = make([]uint16, size)
 			var i = uint16(0)
@@ -238,8 +244,8 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16) (res string, err 
 				w.continue_utf16 = size - i + 1
 			}
 		} else {
-			var bts = make([]byte, size)
 			var n int
+			var bts = make([]byte, size)
 			n, err = buf.Read(bts)
 			if uint16(n) < size {
 				w.continue_utf16 = size - uint16(n)
@@ -253,6 +259,7 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16) (res string, err 
 			runes := utf16.Decode(bts1)
 			res = strings.Trim(string(runes), "\r\n\t ")
 		}
+
 		if richtext_num > 0 {
 			var bts []byte
 			var ss int64

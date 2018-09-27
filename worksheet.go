@@ -105,7 +105,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 			binary.Read(buf, binary.LittleEndian, &c.Btl)
 			binary.Read(buf, binary.LittleEndian, &c.Btc)
 
-			var fms, fme = w.wb.parseString(buf, c.Btc)
+			var fms, fme = w.wb.parseString(buf, c.Btc, "formula")
 			if nil == fme {
 				c.value = fms
 			}
@@ -118,12 +118,12 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	case 0xFD: //LABELSST
 		col = new(LabelsstCol)
 		binary.Read(buf, binary.LittleEndian, col)
-	case 0x204:
+	case 0x204: // LABEL
 		c := new(labelCol)
 		binary.Read(buf, binary.LittleEndian, &c.BlankCol)
 		var count uint16
 		binary.Read(buf, binary.LittleEndian, &count)
-		c.Str, _ = w.wb.parseString(buf, count)
+		c.Str, _ = w.wb.parseString(buf, count, "label")
 		col = c
 	case 0x201: //BLANK
 		col = new(BlankCol)
