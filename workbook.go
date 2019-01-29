@@ -8,7 +8,7 @@ import (
 	"unicode/utf16"
 )
 
-//xls workbook type
+//WorkBook excel work book
 type WorkBook struct {
 	Debug          bool
 	Is5ver         bool
@@ -28,7 +28,7 @@ type WorkBook struct {
 	dateMode       uint16
 }
 
-//read workbook from ole2 file
+//newWorkBookFromOle2 read workbook from ole2 file
 func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	var wb = &WorkBook{
 		rs:      rs,
@@ -69,17 +69,17 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	binary.Read(buf, binary.LittleEndian, bts)
 	item := bytes.NewReader(bts)
 	switch b.Id {
-	case 0x0809: // BOF
+	case XLS_Type_BOF:
 		bif := new(biffHeader)
 		binary.Read(item, binary.LittleEndian, bif)
 		if bif.Ver != 0x600 {
 			wb.Is5ver = true
 		}
 		wb.Type = bif.Type
-	case 0x0042: // CODEPAGE
+	case XLS_Type_CODEPAGE:
 		binary.Read(item, binary.LittleEndian, &wb.Codepage)
-	case 0x003c: // SST CONTINUE identifier
-		if pre.Id == 0x00fc {
+	case XLS_Type_CONTINUE:
+		if pre.Id == XLS_Type_SST {
 			var err error
 			var str string
 			var size uint16
@@ -106,7 +106,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		offset = offset_pre
 		after = pre
 		after_using = b
-	case 0x00fc: // SST identifier
+	case XLS_Type_SST:
 		info := new(SstInfo)
 		binary.Read(item, binary.LittleEndian, info)
 		wb.sst = make([]string, info.Count)
@@ -125,18 +125,18 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 			}
 		}
 		offset = i
-	case 0x0085: // SHEET
+	case XLS_Type_SHEET:
 		var bs = new(boundsheet)
 		binary.Read(item, binary.LittleEndian, bs)
 		// different for BIFF5 and BIFF8
 		wb.addSheet(bs, item)
-	case 0x0017: // EXTERNSHEET
+	case XLS_Type_EXTERNSHEET:
 		if !wb.Is5ver {
 			binary.Read(item, binary.LittleEndian, &wb.ref.Num)
 			wb.ref.Info = make([]ExtSheetInfo, wb.ref.Num)
 			binary.Read(item, binary.LittleEndian, &wb.ref.Info)
 		}
-	case 0x00e0: // XF
+	case XLS_Type_XF:
 		if wb.Is5ver {
 			xf := new(Xf5)
 			binary.Read(item, binary.LittleEndian, xf)
@@ -146,11 +146,11 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 			binary.Read(item, binary.LittleEndian, xf)
 			wb.addXf(xf)
 		}
-	case 0x0031: // FONT
+	case XLS_Type_FONT:
 		f := new(FontInfo)
 		binary.Read(item, binary.LittleEndian, f)
 		wb.addFont(f, item)
-	case 0x041e: //FORMAT
+	case XLS_Type_FORMAT:
 		format := new(Format)
 		binary.Read(item, binary.LittleEndian, &format.Head)
 		if raw, err := wb.parseString(item, format.Head.Size, "format"); nil == err && "" != raw {
@@ -160,7 +160,7 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		}
 
 		wb.addFormat(format)
-	case 0x0022: //DATEMODE
+	case XLS_Type_DATEMODE:
 		binary.Read(item, binary.LittleEndian, &wb.dateMode)
 	}
 	return
@@ -311,7 +311,7 @@ func (w *WorkBook) GetSheet(num int) *WorkSheet {
 	return nil
 }
 
-//Get the number of all sheets, look into example
+//NumSheets Get the number of all sheets, look into example
 func (w *WorkBook) NumSheets() int {
 	return len(w.sheets)
 }
