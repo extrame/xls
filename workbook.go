@@ -242,6 +242,8 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 			res = strings.Trim(string(runes), "\r\n\t ")
 			if i < size {
 				w.continue_utf16 = size - i + 1
+			} else if i == size && err == io.EOF {
+				w.continue_utf16 = 1
 			}
 		} else {
 			var n int
