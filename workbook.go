@@ -208,7 +208,7 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 	if w.Is5ver {
 		var bts = make([]byte, size)
 		_, err = buf.Read(bts)
-		res = string(bytes.Trim(bts, "\r\n\t "))
+		res = string(bts)
 	} else {
 		var richtext_num = uint16(0)
 		var phonetic_size = uint32(0)
@@ -238,13 +238,14 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 			for ; i < size && err == nil; i++ {
 				err = binary.Read(buf, binary.LittleEndian, &bts[i])
 			}
-			runes := utf16.Decode(bts[:i])
-			res = strings.Trim(string(runes), "\r\n\t ")
+
 			if i < size {
 				w.continue_utf16 = size - i + 1
 			} else if i == size && err == io.EOF {
 				w.continue_utf16 = 1
 			}
+
+			res = string(utf16.Decode(bts[:i]))
 		} else {
 			var n int
 			var bts = make([]byte, size)
@@ -258,8 +259,8 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 			for k, v := range bts[:n] {
 				bts1[k] = uint16(v)
 			}
-			runes := utf16.Decode(bts1)
-			res = strings.Trim(string(runes), "\r\n\t ")
+
+			res = string(utf16.Decode(bts1))
 		}
 
 		if richtext_num > 0 {
