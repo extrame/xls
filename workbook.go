@@ -245,6 +245,10 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 				w.continue_utf16 = 1
 			}
 
+			if i > 1 && 0 == bts[i-1] {
+				i--
+			}
+
 			res = string(utf16.Decode(bts[:i]))
 		} else {
 			var n int
@@ -253,6 +257,10 @@ func (w *WorkBook) parseString(buf io.ReadSeeker, size uint16, from string) (res
 			if uint16(n) < size {
 				w.continue_utf16 = size - uint16(n)
 				err = io.EOF
+			}
+
+			if n > 1 && 0 == bts[n-1] {
+				n--
 			}
 
 			var bts1 = make([]uint16, n)
