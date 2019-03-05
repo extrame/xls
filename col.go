@@ -54,10 +54,10 @@ func (xf *XfRk) String(wb *WorkBook) string {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
 			if formatter := wb.Formats[fNo]; formatter != nil {
-				if (strings.Contains(formatter.str, "#") || strings.Contains(formatter.str, ".00")){
+				if strings.Contains(formatter.str, "#") || strings.Contains(formatter.str, ".00") {
 					//If format contains # or .00 then this is a number
-					return xf.Rk.String()					
-				}else{
+					return xf.Rk.String()
+				} else {
 					i, f, isFloat := xf.Rk.number()
 					if !isFloat {
 						f = float64(i)
@@ -94,13 +94,11 @@ func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 		}
 		return
 	}
-	//+++ add lines from here
 	if multiplied != 0 {
 		isFloat = true
 		floatNum = float64(val) / 100
 		return
 	}
-	//+++end
 	return int64(val), 0, false
 }
 
