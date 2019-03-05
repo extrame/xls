@@ -85,7 +85,7 @@ type RK uint32
 func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 	multiplied := rk & 1
 	isInt := rk & 2
-	val := rk >> 2
+	val := int32(rk) >> 2
 	if isInt == 0 {
 		isFloat = true
 		floatNum = math.Float64frombits(uint64(val) << 34)
