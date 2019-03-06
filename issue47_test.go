@@ -18,7 +18,7 @@ func TestIssue47(t *testing.T) {
 		if filepath.Ext(f.Name()) == ".xls" {
 			xlsfilename := f.Name()
 			xlsxfilename := strings.TrimSuffix(xlsfilename, filepath.Ext(xlsfilename)) + ".xlsx"
-			err := compareXlsXlsx(path.Join(testdatapath, xlsfilename),
+			err := CompareXlsXlsx(path.Join(testdatapath, xlsfilename),
 				path.Join(testdatapath, xlsxfilename))
 			if err != "" {
 				t.Fatalf("XLS file %s an XLSX file are not equal: %s", xlsfilename, err)

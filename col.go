@@ -58,11 +58,12 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				if formatterLower == "general" ||
 					strings.Contains(formatter.str, "#") ||
 					strings.Contains(formatter.str, ".00") ||
-					strings.Contains(formatterLower, "mm/yy") ||
-					strings.Contains(formatterLower, "dd/yy") ||
-					strings.Contains(formatterLower, "mm.yy") ||
-					strings.Contains(formatterLower, "dd.yy") ||
-					strings.Contains(formatterLower, "дд.гг") {
+					strings.Contains(formatterLower, "m/y") ||
+					strings.Contains(formatterLower, "d/y") ||
+					strings.Contains(formatterLower, "m.y") ||
+					strings.Contains(formatterLower, "d.y") ||
+					strings.Contains(formatterLower, "h:") ||
+					strings.Contains(formatterLower, "д.г") {
 					//If format contains # or .00 then this is a number
 					return xf.Rk.String()
 				} else {

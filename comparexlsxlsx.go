@@ -8,7 +8,7 @@ import (
 )
 
 //Compares xls and xlsx files
-func compareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
+func CompareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
 	xlsFile, err := Open(xlsfilepathname, "utf-8")
 	if err != nil {
 		return fmt.Sprintf("Cant open xls file: %s", err)
@@ -27,8 +27,8 @@ func compareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
 		for row, xlsxRow := range xlsxSheet.Rows {
 			xlsRow := xlsSheet.Row(row)
 			for cell, xlsxCell := range xlsxRow.Cells {
-				xlsText := xlsRow.Col(cell)
 				xlsxText := xlsxCell.String()
+				xlsText := xlsRow.Col(cell)
 				if xlsText != xlsxText {
 					//try to convert to numbers
 					xlsFloat, xlsErr := strconv.ParseFloat(xlsText, 64)
