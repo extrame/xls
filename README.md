@@ -4,7 +4,7 @@
 
 Pure Golang xls library writen by [Rongshu Tech (chinese)](http://www.rongshu.tech), based on libxls. 
 
-Thanks for contributions from Tamás Gulácsi.
+Thanks for contributions from Tamás Gulácsi @tgulacsi, @flyin9.
 
 # Basic Usage
 
