@@ -213,6 +213,9 @@ func (w *WorkSheet) addContent(row_num uint16, ch contentHandler) {
 		info.Index = row_num
 		row = w.addRow(info)
 	}
+	if row.info.Lcell < ch.LastCol() {
+		row.info.Lcell = ch.LastCol()
+	}
 	row.cols[ch.FirstCol()] = ch
 }
 
