@@ -17,7 +17,7 @@ const (
 
 type boundsheet struct {
 	Filepos uint32
-	Visible TWorkSheetVisibility
+	Visible byte
 	Type    byte
 	Name    byte
 }
