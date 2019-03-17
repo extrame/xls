@@ -7,22 +7,33 @@ import (
 	"unicode/utf16"
 )
 
+type TWorkSheetVisibility byte
+
+const (
+	WorkSheetVisible    TWorkSheetVisibility = 0
+	WorkSheetHidden     TWorkSheetVisibility = 1
+	WorkSheetVeryHidden TWorkSheetVisibility = 2
+)
+
 type boundsheet struct {
 	Filepos uint32
+	Visible TWorkSheetVisibility
 	Type    byte
-	Visible byte
 	Name    byte
 }
 
 //WorkSheet in one WorkBook
 type WorkSheet struct {
-	bs   *boundsheet
-	wb   *WorkBook
-	Name string
-	rows map[uint16]*Row
+	bs         *boundsheet
+	wb         *WorkBook
+	Name       string
+	Selected   bool
+	Visibility TWorkSheetVisibility
+	rows       map[uint16]*Row
 	//NOTICE: this is the max row number of the sheet, so it should be count -1
-	MaxRow uint16
-	parsed bool
+	MaxRow      uint16
+	parsed      bool
+	rightToLeft bool
 }
 
 func (w *WorkSheet) Row(i int) *Row {
@@ -56,6 +67,14 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	switch b.Id {
 	// case 0x0E5: //MERGEDCELLS
 	// ws.mergedCells(buf)
+	case 0x23E: // WINDOW2
+		var sheetOptions, firstVisibleRow, firstVisibleColumn uint16
+		binary.Read(buf, binary.LittleEndian, &sheetOptions)
+		binary.Read(buf, binary.LittleEndian, &firstVisibleRow)    // not valuable
+		binary.Read(buf, binary.LittleEndian, &firstVisibleColumn) // not valuable
+		buf.Seek(int64(b.Size)-2*3, 1)
+		w.rightToLeft = (sheetOptions & 0x40) != 0
+		w.Selected = (sheetOptions & 0x400) != 0
 	case 0x208: //ROW
 		r := new(rowInfo)
 		binary.Read(buf, binary.LittleEndian, r)

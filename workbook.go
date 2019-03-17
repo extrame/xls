@@ -246,7 +246,7 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 
 func (w *WorkBook) addSheet(sheet *boundsheet, buf io.ReadSeeker) {
 	name, _ := w.get_string(buf, uint16(sheet.Name))
-	w.sheets = append(w.sheets, &WorkSheet{bs: sheet, Name: name, wb: w})
+	w.sheets = append(w.sheets, &WorkSheet{bs: sheet, Name: name, wb: w, Visibility: TWorkSheetVisibility(sheet.Visible)})
 }
 
 //reading a sheet from the compress file to memory, you should call this before you try to get anything from sheet
