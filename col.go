@@ -100,7 +100,7 @@ func (rk RK) float() float64 {
 func (rk RK) String(wb *WorkBook) string {
 	i, f, isFloat := rk.number()
 	if isFloat {
-		return strconv.FormatFloat(f, 'f', -1, 64)
+		return strconv.FormatFloat(f, 'f', wb.defaultFloatBit, 64)
 	}
 
 	return strconv.FormatInt(i, 10)
@@ -188,7 +188,7 @@ func (c *NumberCol) String(wb *WorkBook) []string {
 		return []string{v}
 	}
 
-	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
+	return []string{strconv.FormatFloat(c.Float, 'f', wb.defaultFloatBit, 64)}
 }
 
 type FormulaColHeader struct {
@@ -353,7 +353,7 @@ func (c *FormulaCol) parse(wb *WorkBook, ref bool) {
 		} else {
 			c.value, flag = wb.Format(c.Header.IndexXf, c.Header.Value())
 			if !flag {
-				c.value = strconv.FormatFloat(c.Header.Value(), 'f', -1, 64)
+				c.value = strconv.FormatFloat(c.Header.Value(), 'f', wb.defaultFloatBit, 64)
 			}
 		}
 	}

@@ -10,31 +10,33 @@ import (
 
 //WorkBook excel work book
 type WorkBook struct {
-	Debug          bool
-	Is5ver         bool
-	Type           uint16
-	Codepage       uint16
-	Xfs            []XF
-	Fonts          []Font
-	Formats        map[uint16]*Format
-	sheets         []*WorkSheet
-	Author         string
-	rs             io.ReadSeeker
-	sst            []string
-	ref            *extSheetRef
-	continue_utf16 uint16
-	continue_rich  uint16
-	continue_apsb  uint32
-	dateMode       uint16
+	Debug           bool
+	Is5ver          bool
+	Type            uint16
+	Codepage        uint16
+	Xfs             []XF
+	Fonts           []Font
+	Formats         map[uint16]*Format
+	sheets          []*WorkSheet
+	Author          string
+	rs              io.ReadSeeker
+	sst             []string
+	ref             *extSheetRef
+	continue_utf16  uint16
+	continue_rich   uint16
+	continue_apsb   uint32
+	dateMode        uint16
+	defaultFloatBit int
 }
 
 //newWorkBookFromOle2 read workbook from ole2 file
 func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	var wb = &WorkBook{
-		rs:      rs,
-		ref:     new(extSheetRef),
-		sheets:  make([]*WorkSheet, 0),
-		Formats: make(map[uint16]*Format),
+		rs:              rs,
+		defaultFloatBit: -1,
+		ref:             new(extSheetRef),
+		sheets:          make([]*WorkSheet, 0),
+		Formats:         make(map[uint16]*Format),
 	}
 
 	wb.parse(rs)
@@ -46,6 +48,11 @@ func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 // SetDebug set debug flag
 func (w *WorkBook) SetDebug(debug bool) {
 	w.Debug = debug
+}
+
+// SetFloatBit 设置小数默认保留位数，默认值 -1 不限制
+func (w *WorkBook) SetFloatBit(n int) {
+	w.defaultFloatBit = n
 }
 
 func (w *WorkBook) parse(buf io.ReadSeeker) {
@@ -194,7 +201,7 @@ func (w *WorkBook) prepare() {
 		}
 	}
 	for _, v := range w.Formats {
-		v.Prepare()
+		v.Prepare(w)
 	}
 }
 

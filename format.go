@@ -78,7 +78,7 @@ type Format struct {
 }
 
 // Prepare format meta data
-func (f *Format) Prepare() {
+func (f *Format) Prepare(wb *WorkBook) {
 	var regexColor = regexp.MustCompile("^\\[[a-zA-Z]+\\]")
 	var regexSharp = regexp.MustCompile("^\\d+\\.?\\d?#+")
 	var regexFraction = regexp.MustCompile("#\\,?#*")
@@ -133,10 +133,14 @@ func (f *Format) Prepare() {
 			if f.bts > 0 {
 				f.bts = f.bts - 1
 			}
-		} else if t := strings.Index(f.Raw[0], "General"); -1 != t {
+		} else if -1 != strings.Index(f.Raw[0], "General") || -1 != strings.Index(f.Raw[0], "general") {
 			f.bts = -1
 		} else if t := strings.Index(f.Raw[0], "@"); -1 != t {
 			f.bts = -1
+		}
+
+		if -1 == f.bts {
+			f.bts = wb.defaultFloatBit
 		}
 	}
 }
@@ -148,10 +152,6 @@ func (f *Format) String(v float64) string {
 
 	switch f.vType {
 	case TYPE_NUMERIC:
-		if 0 == f.bts && nil != f.Raw && "general" == f.Raw[0] {
-			f.bts = -1
-		}
-
 		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
 	case TYPE_CURRENCY:
 		ret = strconv.FormatFloat(v, 'f', f.bts, 64)
