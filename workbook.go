@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"unicode/utf16"
+
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -162,9 +163,9 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	return
 }
 func decodeWindows1251(enc []byte) string {
-    dec := charmap.Windows1251.NewDecoder()
-    out, _ := dec.Bytes(enc)
-    return string(out)
+	dec := charmap.Windows1251.NewDecoder()
+	out, _ := dec.Bytes(enc)
+	return string(out)
 }
 func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err error) {
 	if w.Is5ver {
