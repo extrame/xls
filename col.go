@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/extrame/goyymmdd"
+	yymmdd "github.com/extrame/goyymmdd"
 )
 
 //content type
@@ -54,16 +54,15 @@ func (xf *XfRk) String(wb *WorkBook) string {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
 			if formatter := wb.Formats[fNo]; formatter != nil {
-				if (strings.Contains(formatter.str, "#") || strings.Contains(formatter.str, ".00")){
+				if strings.Contains(formatter.str, "#") || strings.Contains(formatter.str, ".00") {
 					//If format contains # or .00 then this is a number
-					return xf.Rk.String()					
-				}else{
+					return xf.Rk.String()
+				} else {
 					i, f, isFloat := xf.Rk.number()
 					if !isFloat {
 						f = float64(i)
 					}
 					t := timeFromExcelTime(f, wb.dateMode == 1)
-
 					return yymmdd.Format(t, formatter.str)
 				}
 			}
@@ -162,6 +161,10 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
+	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
+		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
+	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
