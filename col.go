@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/extrame/goyymmdd"
+	yymmdd "github.com/extrame/goyymmdd"
 )
 
 //content type
@@ -63,7 +63,6 @@ func (xf *XfRk) String(wb *WorkBook) string {
 						f = float64(i)
 					}
 					t := timeFromExcelTime(f, wb.dateMode == 1)
-
 					return yymmdd.Format(t, formatter.str)
 				}
 			}
@@ -162,6 +161,10 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
+	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
+		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
+	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
