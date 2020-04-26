@@ -54,7 +54,16 @@ func (xf *XfRk) String(wb *WorkBook) string {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
 			if formatter := wb.Formats[fNo]; formatter != nil {
-				if strings.Contains(formatter.str, "#") || strings.Contains(formatter.str, ".00") {
+				formatterLower := strings.ToLower(formatter.str)
+				if formatterLower == "general" ||
+					strings.Contains(formatter.str, "#") ||
+					strings.Contains(formatter.str, ".00") ||
+					strings.Contains(formatterLower, "m/y") ||
+					strings.Contains(formatterLower, "d/y") ||
+					strings.Contains(formatterLower, "m.y") ||
+					strings.Contains(formatterLower, "d.y") ||
+					strings.Contains(formatterLower, "h:") ||
+					strings.Contains(formatterLower, "д.г") {
 					//If format contains # or .00 then this is a number
 					return xf.Rk.String()
 				} else {
@@ -84,7 +93,7 @@ type RK uint32
 func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 	multiplied := rk & 1
 	isInt := rk & 2
-	val := rk >> 2
+	val := int32(rk) >> 2
 	if isInt == 0 {
 		isFloat = true
 		floatNum = math.Float64frombits(uint64(val) << 34)
@@ -93,13 +102,11 @@ func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 		}
 		return
 	}
-	//+++ add lines from here
 	if multiplied != 0 {
 		isFloat = true
 		floatNum = float64(val) / 100
 		return
 	}
-	//+++end
 	return int64(val), 0, false
 }
 
