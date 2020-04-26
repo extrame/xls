@@ -1,28 +1,40 @@
 package xls
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"unicode/utf16"
 )
 
+type TWorkSheetVisibility byte
+
+const (
+	WorkSheetVisible    TWorkSheetVisibility = 0
+	WorkSheetHidden     TWorkSheetVisibility = 1
+	WorkSheetVeryHidden TWorkSheetVisibility = 2
+)
+
 type boundsheet struct {
 	Filepos uint32
-	Type    byte
 	Visible byte
+	Type    byte
 	Name    byte
 }
 
 //WorkSheet in one WorkBook
 type WorkSheet struct {
-	bs   *boundsheet
-	wb   *WorkBook
-	Name string
-	rows map[uint16]*Row
+	bs         *boundsheet
+	wb         *WorkBook
+	Name       string
+	Selected   bool
+	Visibility TWorkSheetVisibility
+	rows       map[uint16]*Row
 	//NOTICE: this is the max row number of the sheet, so it should be count -1
-	MaxRow uint16
-	parsed bool
+	MaxRow      uint16
+	parsed      bool
+	rightToLeft bool
 }
 
 func (w *WorkSheet) Row(i int) *Row {
@@ -37,9 +49,10 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	w.rows = make(map[uint16]*Row)
 	b := new(bof)
 	var bof_pre *bof
+	var col_pre interface{}
 	for {
 		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
-			bof_pre = w.parseBof(buf, b, bof_pre)
+			bof_pre, col_pre = w.parseBof(buf, b, bof_pre, col_pre)
 			if b.Id == 0xa {
 				break
 			}
@@ -51,11 +64,22 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	w.parsed = true
 }
 
-func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
+func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interface{}) (*bof, interface{}) {
 	var col interface{}
+	var bts = make([]byte, b.Size)
+	binary.Read(buf, binary.LittleEndian, bts)
+	buf = bytes.NewReader(bts)
 	switch b.Id {
 	// case 0x0E5: //MERGEDCELLS
 	// ws.mergedCells(buf)
+	case 0x23E: // WINDOW2
+		var sheetOptions, firstVisibleRow, firstVisibleColumn uint16
+		binary.Read(buf, binary.LittleEndian, &sheetOptions)
+		binary.Read(buf, binary.LittleEndian, &firstVisibleRow)    // not valuable
+		binary.Read(buf, binary.LittleEndian, &firstVisibleColumn) // not valuable
+		//buf.Seek(int64(b.Size)-2*3, 1)
+		w.rightToLeft = (sheetOptions & 0x40) != 0
+		w.Selected = (sheetOptions & 0x400) != 0
 	case 0x208: //ROW
 		r := new(rowInfo)
 		binary.Read(buf, binary.LittleEndian, r)
@@ -89,6 +113,18 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 		c.Bts = make([]byte, b.Size-20)
 		binary.Read(buf, binary.LittleEndian, &c.Bts)
 		col = c
+	case 0x207: //STRING = FORMULA-VALUE is expected right after FORMULA
+		if ch, ok := col_pre.(*FormulaCol); ok {
+			c := new(FormulaStringCol)
+			c.Col = ch.Header.Col
+			var cStringLen uint16
+			binary.Read(buf, binary.LittleEndian, &cStringLen)
+			str, err := w.wb.get_string(buf, cStringLen)
+			if nil == err {
+				c.RenderedValue = str
+			}
+			col = c
+		}
 	case 0x27e: //RK
 		col = new(RkCol)
 		binary.Read(buf, binary.LittleEndian, col)
@@ -163,7 +199,7 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	if col != nil {
 		w.add(col)
 	}
-	return b
+	return b, col
 }
 
 func (w *WorkSheet) add(content interface{}) {
@@ -193,6 +229,9 @@ func (w *WorkSheet) addContent(row_num uint16, ch contentHandler) {
 		info := new(rowInfo)
 		info.Index = row_num
 		row = w.addRow(info)
+	}
+	if row.info.Lcell < ch.LastCol() {
+		row.info.Lcell = ch.LastCol()
 	}
 	row.cols[ch.FirstCol()] = ch
 }
