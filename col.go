@@ -168,6 +168,18 @@ func (c *NumberCol) String(wb *WorkBook) []string {
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
+type FormulaStringCol struct {
+	Col
+	RenderedValue string
+}
+
+func (c *FormulaStringCol) String(wb *WorkBook) []string {
+	return []string{c.RenderedValue}
+}
+
+//str, err = wb.get_string(buf_item, size)
+//wb.sst[offset_pre] = wb.sst[offset_pre] + str
+
 type FormulaCol struct {
 	Header struct {
 		Col

@@ -35,6 +35,17 @@ func (r *Row) Col(i int) string {
 	return ""
 }
 
+//ColExact Get the Nth Col from the Row, if has not, return nil.
+//For merged cells value is returned for first cell only
+func (r *Row) ColExact(i int) string {
+	serial := uint16(i)
+	if ch, ok := r.cols[serial]; ok {
+		strs := ch.String(r.wb)
+		return strs[0]
+	}
+	return ""
+}
+
 //LastCol Get the number of Last Col of the Row.
 func (r *Row) LastCol() int {
 	return int(r.info.Lcell)
