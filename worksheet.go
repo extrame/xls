@@ -2,14 +2,15 @@ package xls
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"unicode/utf16"
 )
 
 type boundsheet struct {
 	Filepos uint32
-	Type    byte
 	Visible byte
+	Type    byte
 	Name    byte
 }
 
@@ -37,12 +38,23 @@ type WorkSheet struct {
 	parsed bool
 }
 
+// Row return row data by number
 func (w *WorkSheet) Row(i int) *Row {
 	row := w.rows[uint16(i)]
 	if row != nil {
 		row.wb = w.wb
 	}
 	return row
+}
+
+// GetSheetVisible provides a function to get worksheet visible
+func (w *WorkSheet) GetSheetVisible() bool {
+	fmt.Println("ws visible:", w.bs.Visible)
+	if 0 == w.bs.Visible {
+		return true
+	}
+
+	return false
 }
 
 func (w *WorkSheet) parse(buf io.ReadSeeker) {
