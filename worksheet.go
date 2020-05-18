@@ -2,7 +2,6 @@ package xls
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 	"unicode/utf16"
 )
@@ -28,14 +27,15 @@ type ExtSheetInfo struct {
 
 //WorkSheet in one WorkBook
 type WorkSheet struct {
-	bs   *boundsheet
-	wb   *WorkBook
-	Name string
-	rows map[uint16]*Row
-	//NOTICE: this is the max row number of the sheet, so it should be count -1
-	MaxRow uint16
-	id     int
-	parsed bool
+	bs          *boundsheet
+	wb          *WorkBook
+	Name        string
+	Selected    bool
+	rows        map[uint16]*Row
+	MaxRow      uint16
+	id          int
+	parsed      bool
+	rightToLeft bool
 }
 
 // Row return row data by number
@@ -49,7 +49,6 @@ func (w *WorkSheet) Row(i int) *Row {
 
 // GetSheetVisible provides a function to get worksheet visible
 func (w *WorkSheet) GetSheetVisible() bool {
-	fmt.Println("ws visible:", w.bs.Visible)
 	if 0 == w.bs.Visible {
 		return true
 	}
@@ -79,6 +78,14 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof) *bof {
 	switch b.Id {
 	// case 0x0E5: //MERGEDCELLS
 	// ws.mergedCells(buf)
+	case XLS_Type_WINDOW2: // WINDOW2
+		var sheetOptions, firstVisibleRow, firstVisibleColumn uint16
+		binary.Read(buf, binary.LittleEndian, &sheetOptions)
+		binary.Read(buf, binary.LittleEndian, &firstVisibleRow)    // not valuable
+		binary.Read(buf, binary.LittleEndian, &firstVisibleColumn) // not valuable
+		//buf.Seek(int64(b.Size)-2*3, 1)
+		w.rightToLeft = (sheetOptions & 0x40) != 0
+		w.Selected = (sheetOptions & 0x400) != 0
 	case 0x208: //ROW
 		r := new(rowInfo)
 		binary.Read(buf, binary.LittleEndian, r)

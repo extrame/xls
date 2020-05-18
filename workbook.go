@@ -3,7 +3,6 @@ package xls
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"strings"
 	"unicode/utf16"
@@ -137,7 +136,6 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		var bs = new(boundsheet)
 		binary.Read(item, binary.LittleEndian, bs)
 		// different for BIFF5 and BIFF8
-		fmt.Println("bs:", *bs)
 		wb.addSheet(bs, item)
 	case XLS_Type_EXTERNSHEET:
 		if !wb.Is5ver {
