@@ -168,7 +168,7 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
+	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 && wb.Formats[fNo] != nil {
 		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
 		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
 	}
