@@ -11,7 +11,7 @@ import (
 	yymmdd "github.com/extrame/goyymmdd"
 )
 
-//content type
+// content type
 type contentHandler interface {
 	String(*WorkBook) []string
 	FirstCol() uint16
@@ -64,7 +64,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 					strings.Contains(formatterLower, "d.y") ||
 					strings.Contains(formatterLower, "h:") ||
 					strings.Contains(formatterLower, "д.г") {
-					//If format contains # or .00 then this is a number
+					// If format contains # or .00 then this is a number
 					return xf.Rk.String()
 				} else {
 					i, f, isFloat := xf.Rk.number()
@@ -82,7 +82,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				f = float64(i)
 			}
 			t := timeFromExcelTime(f, wb.dateMode == 1)
-			return t.Format(time.RFC3339) //TODO it should be international
+			return t.Format(time.RFC3339) // TODO it should be international
 		}
 	}
 	return xf.Rk.String()
@@ -184,8 +184,8 @@ func (c *FormulaStringCol) String(wb *WorkBook) []string {
 	return []string{c.RenderedValue}
 }
 
-//str, err = wb.get_string(buf_item, size)
-//wb.sst[offset_pre] = wb.sst[offset_pre] + str
+// str, err = wb.get_string(buf_item, size)
+// wb.sst[offset_pre] = wb.sst[offset_pre] + str
 
 type FormulaCol struct {
 	Header struct {
@@ -237,4 +237,16 @@ type BlankCol struct {
 
 func (c *BlankCol) String(wb *WorkBook) []string {
 	return []string{""}
+}
+
+type MergeCells struct {
+	Count uint16
+	Refs  []Ref8
+}
+
+type Ref8 struct {
+	RwFirst  uint16
+	RwLast   uint16
+	ColFirst uint16
+	ColLast  uint16
 }
