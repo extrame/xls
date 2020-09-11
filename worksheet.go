@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"unicode/utf16"
 )
 
@@ -35,6 +36,8 @@ type WorkSheet struct {
 	MaxRow      uint16
 	parsed      bool
 	rightToLeft bool
+	// NOTICE: get all merge cell
+	mergeCells  *MergeCells
 }
 
 func (w *WorkSheet) Row(i int) *Row {
@@ -70,8 +73,18 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 	binary.Read(buf, binary.LittleEndian, bts)
 	buf = bytes.NewReader(bts)
 	switch b.Id {
-	// case 0x0E5: //MERGEDCELLS
-	// ws.mergedCells(buf)
+	case 0x0E5: // MERGEDCELLS
+		mergeCells := new(MergeCells)
+		err := binary.Read(buf, binary.LittleEndian, &mergeCells.Count)
+		size := (b.Size - 2) / 8
+		mergeCells.Refs = make([]Ref8, size)
+		for i := uint16(0); i < size; i++ {
+			binary.Read(buf, binary.LittleEndian, &mergeCells.Refs[i])
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.mergeCells = mergeCells
 	case 0x23E: // WINDOW2
 		var sheetOptions, firstVisibleRow, firstVisibleColumn uint16
 		binary.Read(buf, binary.LittleEndian, &sheetOptions)
