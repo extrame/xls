@@ -3,11 +3,15 @@ package xls
 import (
 	"bytes"
 	"encoding/binary"
-	"golang.org/x/text/encoding/charmap"
+	"errors"
 	"io"
 	"os"
 	"unicode/utf16"
+
+	"golang.org/x/text/encoding/charmap"
 )
+
+var FileIsEncryptedError = errors.New("File is encrypted")
 
 //xls workbook type
 type WorkBook struct {
@@ -29,28 +33,39 @@ type WorkBook struct {
 }
 
 //read workbook from ole2 file
-func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
+func newWorkBookFromOle2(rs io.ReadSeeker) (*WorkBook, error) {
 	wb := new(WorkBook)
 	wb.Formats = make(map[uint16]*Format)
 	// wb.bts = bts
 	wb.rs = rs
 	wb.sheets = make([]*WorkSheet, 0)
-	wb.Parse(rs)
-	return wb
+	if err := wb.Parse(rs); err != nil {
+		return nil, err
+	}
+	return wb, nil
 }
 
-func (w *WorkBook) Parse(buf io.ReadSeeker) {
+func (w *WorkBook) Parse(buf io.ReadSeeker) error {
 	b := new(bof)
 	bof_pre := new(bof)
 	// buf := bytes.NewReader(bts)
 	offset := 0
 	for {
 		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+			// if read in a FilePass record which indicated by 0x2f, then thisl file is encrypted.
+			// return FileIsEncryptedError here because we still aren't able to decode the file now.
+			// ref: https://stackoverflow.com/questions/25422599/parse-xls-file-with-protected-protected-workbook
+			// https://www.openoffice.org/sc/excelfileformat.pdf
+			if b.Id == 0x2f {
+				return FileIsEncryptedError
+			}
 			bof_pre, b, offset = w.parseBof(buf, b, bof_pre, offset)
 		} else {
 			break
 		}
 	}
+
+	return nil
 }
 
 func (w *WorkBook) addXf(xf st_xf_data) {

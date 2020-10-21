@@ -52,7 +52,7 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 				}
 			}
 			if book != nil {
-				wb = newWorkBookFromOle2(ole.OpenFile(book, root))
+				wb, err = newWorkBookFromOle2(ole.OpenFile(book, root))
 				return
 			}
 		}
