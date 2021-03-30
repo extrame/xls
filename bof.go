@@ -21,10 +21,6 @@ func (b *bof) utf16String(buf io.ReadSeeker, count uint32) string {
 }
 
 type biffHeader struct {
-	Ver     uint16
-	Type    uint16
-	Id_make uint16
-	Year    uint16
-	Flags   uint32
-	Min_ver uint32
+	Ver  uint16
+	Type uint16
 }
