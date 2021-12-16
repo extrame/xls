@@ -2,13 +2,11 @@ package xls
 
 import (
 	"fmt"
+	yymmdd "github.com/extrame/goyymmdd"
 	"math"
 	"strconv"
 	"strings"
-
 	"time"
-
-	yymmdd "github.com/extrame/goyymmdd"
 )
 
 //content type
@@ -71,8 +69,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 					if !isFloat {
 						f = float64(i)
 					}
-					t := timeFromExcelTime(f, wb.dateMode == 1)
-					return yymmdd.Format(t, formatter.str)
+					return strconv.FormatFloat(f, 'f', 6, 64)
 				}
 			}
 			// see http://www.openoffice.org/sc/excelfileformat.pdf Page #174
