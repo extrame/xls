@@ -11,7 +11,7 @@ import (
 	yymmdd "github.com/extrame/goyymmdd"
 )
 
-const DDMMYYYYhhmmss = "2006-01-02 15:04:05"
+const DDMMYYYYhhmmss = "2006\\01\\02 15:04:05"
 
 //content type
 type contentHandler interface {
