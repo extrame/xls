@@ -11,6 +11,8 @@ import (
 	yymmdd "github.com/extrame/goyymmdd"
 )
 
+const DDMMYYYYhhmmss = "2006/01/02 15:04:05"
+
 //content type
 type contentHandler interface {
 	String(*WorkBook) []string
@@ -170,6 +172,9 @@ type NumberCol struct {
 func (c *NumberCol) String(wb *WorkBook) []string {
 	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
 		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+		if fNo == 176 {
+			return []string{t.Format(DDMMYYYYhhmmss)}
+		}
 		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
 	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
