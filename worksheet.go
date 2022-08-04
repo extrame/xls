@@ -51,7 +51,8 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 	var bof_pre *bof
 	var col_pre interface{}
 	for {
-		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+		//if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+		if err := ReadBof(buf, b); err == nil {
 			bof_pre, col_pre = w.parseBof(buf, b, bof_pre, col_pre)
 			if b.Id == 0xa {
 				break
@@ -81,8 +82,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		w.rightToLeft = (sheetOptions & 0x40) != 0
 		w.Selected = (sheetOptions & 0x400) != 0
 	case 0x208: //ROW
-		r := new(rowInfo)
-		binary.Read(buf, binary.LittleEndian, r)
+		//r := new(rowInfo)
+		//binary.Read(buf, binary.LittleEndian, r)
+		r := ReadRowInfo(buf)
 		w.addRow(r)
 	case 0x0BD: //MULRK
 		mc := new(MulrkCol)
@@ -129,8 +131,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		col = new(RkCol)
 		binary.Read(buf, binary.LittleEndian, col)
 	case 0xFD: //LABELSST
-		col = new(LabelsstCol)
-		binary.Read(buf, binary.LittleEndian, col)
+		//col = new(LabelsstCol)
+		//binary.Read(buf, binary.LittleEndian, col)
+		col = ReadLabelsstCol(buf)
 	case 0x204:
 		c := new(labelCol)
 		binary.Read(buf, binary.LittleEndian, &c.BlankCol)
