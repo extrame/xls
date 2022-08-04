@@ -45,7 +45,8 @@ func (w *WorkBook) Parse(buf io.ReadSeeker) {
 	// buf := bytes.NewReader(bts)
 	offset := 0
 	for {
-		if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+		//if err := binary.Read(buf, binary.LittleEndian, b); err == nil {
+		if err := ReadBof(buf, b); err == nil {
 			bof_pre, b, offset = w.parseBof(buf, b, bof_pre, offset)
 		} else {
 			break
@@ -72,8 +73,9 @@ func (w *WorkBook) addFormat(format *Format) {
 func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int) (after *bof, after_using *bof, offset int) {
 	after = b
 	after_using = pre
-	var bts = make([]byte, b.Size)
-	binary.Read(buf, binary.LittleEndian, bts)
+	//var bts = make([]byte, b.Size)
+	//binary.Read(buf, binary.LittleEndian, bts)
+	var bts = MustReadBytes(buf, int(b.Size))
 	buf_item := bytes.NewReader(bts)
 	switch b.Id {
 	case 0x809:
@@ -135,7 +137,8 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 		offset = i
 	case 0x85: // boundsheet
 		var bs = new(boundsheet)
-		binary.Read(buf_item, binary.LittleEndian, bs)
+		//binary.Read(buf_item, binary.LittleEndian, bs)
+		bs = ReadBoundSheet(buf_item)
 		// different for BIFF5 and BIFF8
 		wb.addSheet(bs, buf_item)
 	case 0x0e0: // XF
@@ -177,15 +180,18 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 		var richtext_num = uint16(0)
 		var phonetic_size = uint32(0)
 		var flag byte
-		err = binary.Read(buf, binary.LittleEndian, &flag)
+		//err = binary.Read(buf, binary.LittleEndian, &flag)
+		flag, err = ReadByte(buf)
 		if flag&0x8 != 0 {
-			err = binary.Read(buf, binary.LittleEndian, &richtext_num)
+			//err = binary.Read(buf, binary.LittleEndian, &richtext_num)
+			richtext_num, err = ReadUint16(buf)
 		} else if w.continue_rich > 0 {
 			richtext_num = w.continue_rich
 			w.continue_rich = 0
 		}
 		if flag&0x4 != 0 {
-			err = binary.Read(buf, binary.LittleEndian, &phonetic_size)
+			//err = binary.Read(buf, binary.LittleEndian, &phonetic_size)
+			phonetic_size, err = ReadUint32(buf)
 		} else if w.continue_apsb > 0 {
 			phonetic_size = w.continue_apsb
 			w.continue_apsb = 0
@@ -194,7 +200,8 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			var bts = make([]uint16, size)
 			var i = uint16(0)
 			for ; i < size && err == nil; i++ {
-				err = binary.Read(buf, binary.LittleEndian, &bts[i])
+				//err = binary.Read(buf, binary.LittleEndian, &bts[i])
+				bts[i], err = ReadUint16(buf)
 			}
 
 			// when eof found, we dont want to append last element
@@ -226,15 +233,16 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			res = string(runes)
 		}
 		if richtext_num > 0 {
-			var bts []byte
+			//var bts []byte
 			var seek_size int64
 			if w.Is5ver {
 				seek_size = int64(2 * richtext_num)
 			} else {
 				seek_size = int64(4 * richtext_num)
 			}
-			bts = make([]byte, seek_size)
-			err = binary.Read(buf, binary.LittleEndian, bts)
+			//bts = make([]byte, seek_size)
+			//err = binary.Read(buf, binary.LittleEndian, bts)
+			_, err = ReadBytes(buf, int(seek_size))
 			if err == io.EOF {
 				w.continue_rich = richtext_num
 			}
@@ -242,9 +250,10 @@ func (w *WorkBook) get_string(buf io.ReadSeeker, size uint16) (res string, err e
 			// err = binary.Read(buf, binary.LittleEndian, bts)
 		}
 		if phonetic_size > 0 {
-			var bts []byte
-			bts = make([]byte, phonetic_size)
-			err = binary.Read(buf, binary.LittleEndian, bts)
+			//var bts []byte
+			//bts = make([]byte, phonetic_size)
+			//err = binary.Read(buf, binary.LittleEndian, bts)
+			_, err = ReadBytes(buf, int(phonetic_size))
 			if err == io.EOF {
 				w.continue_apsb = phonetic_size
 			}
