@@ -2,11 +2,11 @@ package xls
 
 import (
 	"fmt"
-	"github.com/tealeg/xlsx"
+// 	"github.com/tealeg/xlsx"
 	"math"
 	"strconv"
 )
-
+/*
 //Compares xls and xlsx files
 func CompareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
 	xlsFile, err := Open(xlsfilepathname, "utf-8")
@@ -53,3 +53,4 @@ func CompareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
 
 	return ""
 }
+*/
