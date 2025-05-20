@@ -23,7 +23,7 @@ type boundsheet struct {
 	Name    byte
 }
 
-//WorkSheet in one WorkBook
+// WorkSheet in one WorkBook
 type WorkSheet struct {
 	bs         *boundsheet
 	wb         *WorkBook
@@ -38,11 +38,11 @@ type WorkSheet struct {
 }
 
 func (w *WorkSheet) Row(i int) *Row {
-	row := w.rows[uint16(i)]
-	if row != nil {
+	if row, ok := w.rows[uint16(i)]; ok {
 		row.wb = w.wb
+		return row
 	}
-	return row
+	return nil
 }
 
 func (w *WorkSheet) parse(buf io.ReadSeeker) {
