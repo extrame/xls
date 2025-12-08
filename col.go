@@ -51,6 +51,9 @@ type XfRk struct {
 func (xf *XfRk) String(wb *WorkBook) string {
 	idx := int(xf.Index)
 	if len(wb.Xfs) > idx {
+		if wb.Xfs[idx] == nil {
+			return xf.Rk.String()
+		}
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
 			if formatter := wb.Formats[fNo]; formatter != nil {
@@ -168,9 +171,13 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
-		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
-		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
+	if int(c.Index) < len(wb.Xfs) && wb.Xfs[c.Index] != nil {
+		if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
+			t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+			if fmtObj := wb.Formats[fNo]; fmtObj != nil {
+				return []string{yymmdd.Format(t, fmtObj.str)}
+			}
+		}
 	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
@@ -218,7 +225,10 @@ type LabelsstCol struct {
 }
 
 func (c *LabelsstCol) String(wb *WorkBook) []string {
-	return []string{wb.sst[int(c.Sst)]}
+	if int(c.Sst) < len(wb.sst) {
+		return []string{wb.sst[int(c.Sst)]}
+	}
+	return []string{""}
 }
 
 type labelCol struct {
