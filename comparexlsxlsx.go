@@ -26,6 +26,9 @@ func CompareXlsXlsx(xlsfilepathname string, xlsxfilepathname string) string {
 		}
 		for row, xlsxRow := range xlsxSheet.Rows {
 			xlsRow := xlsSheet.Row(row)
+			if xlsRow == nil {
+				continue
+			}
 			for cell, xlsxCell := range xlsxRow.Cells {
 				xlsxText := xlsxCell.String()
 				xlsText := xlsRow.Col(cell)

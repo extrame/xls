@@ -14,7 +14,7 @@ type Ranger interface {
 type CellRange struct {
 	FirstRowB uint16
 	LastRowB  uint16
-	FristColB uint16
+	FirstColB uint16
 	LastColB  uint16
 }
 
@@ -27,7 +27,7 @@ func (c *CellRange) LastRow() uint16 {
 }
 
 func (c *CellRange) FirstCol() uint16 {
-	return c.FristColB
+	return c.FirstColB
 }
 
 func (c *CellRange) LastCol() uint16 {
@@ -48,7 +48,7 @@ type HyperLink struct {
 
 //get the hyperlink string, use the public variable Url to get the original Url
 func (h *HyperLink) String(wb *WorkBook) []string {
-	res := make([]string, h.LastColB-h.FristColB+1)
+	res := make([]string, h.LastColB-h.FirstColB+1)
 	var str string
 	if h.IsUrl {
 		str = fmt.Sprintf("%s(%s)", h.Description, h.Url)
@@ -56,7 +56,7 @@ func (h *HyperLink) String(wb *WorkBook) []string {
 		str = h.ExtendedFilePath
 	}
 
-	for i := uint16(0); i < h.LastColB-h.FristColB+1; i++ {
+	for i := uint16(0); i < h.LastColB-h.FirstColB+1; i++ {
 		res[i] = str
 	}
 	return res

@@ -168,9 +168,30 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
-		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
-		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
+	idx := int(c.Index)
+	if idx < len(wb.Xfs) {
+		fNo := wb.Xfs[idx].formatNo()
+		if fNo >= 164 { // user defined format
+			if formatter := wb.Formats[fNo]; formatter != nil {
+				formatterLower := strings.ToLower(formatter.str)
+				if formatterLower == "general" ||
+					strings.Contains(formatter.str, "#") ||
+					strings.Contains(formatter.str, ".00") ||
+					strings.Contains(formatterLower, "m/y") ||
+					strings.Contains(formatterLower, "d/y") ||
+					strings.Contains(formatterLower, "m.y") ||
+					strings.Contains(formatterLower, "d.y") ||
+					strings.Contains(formatterLower, "h:") ||
+					strings.Contains(formatterLower, "д.г") {
+					return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
+				}
+				t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+				return []string{yymmdd.Format(t, formatter.str)}
+			}
+		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // built-in date format
+			t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+			return []string{t.Format(time.RFC3339)}
+		}
 	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
@@ -218,7 +239,11 @@ type LabelsstCol struct {
 }
 
 func (c *LabelsstCol) String(wb *WorkBook) []string {
-	return []string{wb.sst[int(c.Sst)]}
+	idx := int(c.Sst)
+	if idx < len(wb.sst) {
+		return []string{wb.sst[idx]}
+	}
+	return []string{""}
 }
 
 type labelCol struct {

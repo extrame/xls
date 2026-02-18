@@ -3,7 +3,6 @@ package xls
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"unicode/utf16"
 )
@@ -57,7 +56,6 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 				break
 			}
 		} else {
-			fmt.Println(err)
 			break
 		}
 	}
@@ -67,7 +65,9 @@ func (w *WorkSheet) parse(buf io.ReadSeeker) {
 func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interface{}) (*bof, interface{}) {
 	var col interface{}
 	var bts = make([]byte, b.Size)
-	binary.Read(buf, binary.LittleEndian, bts)
+	if err := binary.Read(buf, binary.LittleEndian, bts); err != nil {
+		return b, col
+	}
 	buf = bytes.NewReader(bts)
 	switch b.Id {
 	// case 0x0E5: //MERGEDCELLS
@@ -86,6 +86,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		w.addRow(r)
 	case 0x0BD: //MULRK
 		mc := new(MulrkCol)
+		if b.Size < 6 {
+			break
+		}
 		size := (b.Size - 6) / 6
 		binary.Read(buf, binary.LittleEndian, &mc.Col)
 		mc.Xfrks = make([]XfRk, size)
@@ -96,6 +99,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		col = mc
 	case 0x0BE: //MULBLANK
 		mc := new(MulBlankCol)
+		if b.Size < 6 {
+			break
+		}
 		size := (b.Size - 6) / 2
 		binary.Read(buf, binary.LittleEndian, &mc.Col)
 		mc.Xfs = make([]uint16, size)
@@ -110,6 +116,10 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 	case 0x06: //FORMULA
 		c := new(FormulaCol)
 		binary.Read(buf, binary.LittleEndian, &c.Header)
+		if b.Size < 20 {
+			col = c
+			break
+		}
 		c.Bts = make([]byte, b.Size-20)
 		binary.Read(buf, binary.LittleEndian, &c.Bts)
 		col = c
@@ -182,10 +192,12 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		}
 		if flag&0x8 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			var bts = make([]uint16, count)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			runes := utf16.Decode(bts[:len(bts)-1])
-			hy.TextMark = string(runes)
+			if count > 0 {
+				var bts = make([]uint16, count)
+				binary.Read(buf, binary.LittleEndian, &bts)
+				runes := utf16.Decode(bts[:len(bts)-1])
+				hy.TextMark = string(runes)
+			}
 		}
 
 		w.addRange(&hy.CellRange, &hy)

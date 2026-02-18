@@ -23,12 +23,19 @@ func (r *Row) Col(i int) string {
 	serial := uint16(i)
 	if ch, ok := r.cols[serial]; ok {
 		strs := ch.String(r.wb)
-		return strs[0]
+		if len(strs) > 0 {
+			return strs[0]
+		}
+		return ""
 	} else {
 		for _, v := range r.cols {
 			if v.FirstCol() <= serial && v.LastCol() >= serial {
 				strs := v.String(r.wb)
-				return strs[serial-v.FirstCol()]
+				idx := int(serial - v.FirstCol())
+				if idx < len(strs) {
+					return strs[idx]
+				}
+				return ""
 			}
 		}
 	}
@@ -41,7 +48,10 @@ func (r *Row) ColExact(i int) string {
 	serial := uint16(i)
 	if ch, ok := r.cols[serial]; ok {
 		strs := ch.String(r.wb)
-		return strs[0]
+		if len(strs) > 0 {
+			return strs[0]
+		}
+		return ""
 	}
 	return ""
 }

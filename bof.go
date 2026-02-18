@@ -14,6 +14,9 @@ type bof struct {
 
 //read the utf16 string from reader
 func (b *bof) utf16String(buf io.ReadSeeker, count uint32) string {
+	if count == 0 {
+		return ""
+	}
 	var bts = make([]uint16, count)
 	binary.Read(buf, binary.LittleEndian, &bts)
 	runes := utf16.Decode(bts[:len(bts)-1])
