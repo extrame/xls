@@ -182,10 +182,12 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		}
 		if flag&0x8 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
-			var bts = make([]uint16, count)
-			binary.Read(buf, binary.LittleEndian, &bts)
-			runes := utf16.Decode(bts[:len(bts)-1])
-			hy.TextMark = string(runes)
+			if count > 0 {
+				var bts = make([]uint16, count)
+				binary.Read(buf, binary.LittleEndian, &bts)
+				runes := utf16.Decode(bts[:len(bts)-1])
+				hy.TextMark = string(runes)
+			}
 		}
 
 		w.addRange(&hy.CellRange, &hy)
