@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"golang.org/x/text/encoding/charmap"
 	"io"
-	"os"
 	"unicode/utf16"
 )
 
@@ -21,6 +20,7 @@ type WorkBook struct {
 	sheets         []*WorkSheet
 	Author         string
 	rs             io.ReadSeeker
+	closer         io.Closer
 	sst            []string
 	continue_utf16 uint16
 	continue_rich  uint16
@@ -64,7 +64,7 @@ func (w *WorkBook) addFont(font *FontInfo, buf io.ReadSeeker) {
 
 func (w *WorkBook) addFormat(format *Format) {
 	if w.Formats == nil {
-		os.Exit(1)
+		w.Formats = make(map[uint16]*Format)
 	}
 	w.Formats[format.Head.Index] = format
 }
@@ -320,4 +320,12 @@ func (w *WorkBook) ReadAllCells(max int) (res [][]string) {
 		}
 	}
 	return
+}
+
+// Close releases the file opened by Open. It is a no-op for OpenReader.
+func (w *WorkBook) Close() error {
+	if w == nil || w.closer == nil {
+		return nil
+	}
+	return w.closer.Close()
 }
