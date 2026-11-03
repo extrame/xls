@@ -1,19 +1,26 @@
 package xls
 
 import (
+	"errors"
 	"io"
 	"os"
 
 	"github.com/extrame/ole2"
 )
 
-//Open one xls file
+//Open one xls file. The caller must Close the returned workbook.
 func Open(file string, charset string) (*WorkBook, error) {
-	if fi, err := os.Open(file); err == nil {
-		return OpenReader(fi, charset)
-	} else {
+	fi, err := os.Open(file)
+	if err != nil {
 		return nil, err
 	}
+	wb, err := OpenReader(fi, charset)
+	if err != nil {
+		fi.Close()
+		return nil, err
+	}
+	wb.closer = fi
+	return wb, nil
 }
 
 //Open one xls file and return the closer
@@ -55,6 +62,7 @@ func OpenReader(reader io.ReadSeeker, charset string) (wb *WorkBook, err error) 
 				wb = newWorkBookFromOle2(ole.OpenFile(book, root))
 				return
 			}
+			err = errors.New("xls: Workbook stream not found")
 		}
 	}
 	return
