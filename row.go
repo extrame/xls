@@ -22,14 +22,20 @@ type Row struct {
 func (r *Row) Col(i int) string {
 	serial := uint16(i)
 	if ch, ok := r.cols[serial]; ok {
-		strs := ch.String(r.wb)
-		return strs[0]
-	} else {
-		for _, v := range r.cols {
-			if v.FirstCol() <= serial && v.LastCol() >= serial {
-				strs := v.String(r.wb)
-				return strs[serial-v.FirstCol()]
+		// Some records (e.g. an empty MULBLANK run whose last column is before
+		// its first) hold no cells at all; that is a blank cell, not a crash.
+		if strs := ch.String(r.wb); len(strs) > 0 {
+			return strs[0]
+		}
+		return ""
+	}
+	for _, v := range r.cols {
+		if v.FirstCol() <= serial && v.LastCol() >= serial {
+			strs := v.String(r.wb)
+			if index := int(serial) - int(v.FirstCol()); index < len(strs) {
+				return strs[index]
 			}
+			return ""
 		}
 	}
 	return ""
