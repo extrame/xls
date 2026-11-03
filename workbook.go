@@ -28,6 +28,11 @@ type WorkBook struct {
 	dateMode       uint16
 }
 
+// maxSstEntries bounds the shared-string table so a corrupt count cannot
+// exhaust memory. 4M unique strings is far beyond any real attendance or
+// payroll workbook.
+const maxSstEntries = 1 << 22
+
 //read workbook from ole2 file
 func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb := new(WorkBook)
@@ -114,6 +119,10 @@ func (wb *WorkBook) parseBof(buf io.ReadSeeker, b *bof, pre *bof, offset_pre int
 	case 0xfc: // SST
 		info := new(SstInfo)
 		binary.Read(buf_item, binary.LittleEndian, info)
+		if info.Count > maxSstEntries {
+			// a corrupt count would otherwise allocate gigabytes
+			info.Count = 0
+		}
 		wb.sst = make([]string, info.Count)
 		var size uint16
 		var i = 0

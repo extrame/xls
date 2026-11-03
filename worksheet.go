@@ -168,6 +168,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 				var upCount uint16
 				binary.Read(buf, binary.LittleEndian, &upCount)
 				binary.Read(buf, binary.LittleEndian, &count)
+				if count > maxRecordBytes {
+					return b, nil
+				}
 				bts := make([]byte, count)
 				binary.Read(buf, binary.LittleEndian, &bts)
 				hy.ShortedFilePath = string(bts)
@@ -182,6 +185,9 @@ func (w *WorkSheet) parseBof(buf io.ReadSeeker, b *bof, pre *bof, col_pre interf
 		}
 		if flag&0x8 != 0 {
 			binary.Read(buf, binary.LittleEndian, &count)
+			if count == 0 || count > maxRecordBytes {
+				return b, nil
+			}
 			var bts = make([]uint16, count)
 			binary.Read(buf, binary.LittleEndian, &bts)
 			runes := utf16.Decode(bts[:len(bts)-1])
@@ -249,3 +255,7 @@ func (w *WorkSheet) addRow(info *rowInfo) (row *Row) {
 	}
 	return
 }
+
+// maxRecordBytes bounds lengths read from a record header before they are used
+// to size an allocation; a BIFF record never exceeds 8224 bytes.
+const maxRecordBytes = 1 << 16
